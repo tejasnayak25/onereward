@@ -95,29 +95,11 @@ const CustomerCardDetail = () => {
   const handleRedeemReward = async (points: number, description: string) => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    if (card && card.points && user?.email) {
-      try {
-        await axios.post("/api/users/redeem", {
-          userEmail: user.email,
-          restaurantName: card.name,
-          points,
-          description,
-        });
-
-        toast({
-          title: "Reward Selected",
-          description: `You've redeemed ${points} points for ${description}.`,
-        });
-
-        window.location.reload();
-      } catch (err) {
-        console.error("Redemption failed:", err);
-        toast({
-          title: "Error",
-          description: "Failed to record redemption.",
-          variant: "destructive",
-        });
-      }
+    if (card && card.points >= points && user?.email) {
+      toast({
+        title: "Offer Selected!",
+        description: `You can visit ${card.name} restaurant and claim your "${description}" offer. Show this card to the staff.`,
+      });
     } else {
       toast({
         title: "Not Enough Points",

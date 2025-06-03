@@ -132,20 +132,20 @@
   .hover-lift {
     @apply transition-transform duration-300 hover:-translate-y-1;
   }
-  
+
   .hover-scale {
     @apply transition-transform duration-300 hover:scale-[1.03];
   }
-  
+
   /* Link underline animation */
   .link-underline {
     @apply relative;
   }
-  
+
   .link-underline:after {
     @apply content-[''] absolute w-full scale-x-0 h-0.5 bottom-0 left-0 bg-primary origin-bottom-right transition-transform duration-300;
   }
-  
+
   .link-underline:hover:after {
     @apply scale-x-100 origin-bottom-left;
   }
@@ -187,4 +187,21 @@
   opacity: 0;
   transform: translateY(-8px);
   transition: opacity 300ms, transform 300ms;
+}
+
+/* Continuous shine animation */
+@keyframes cardShine {
+  0% {
+    transform: translateX(-100%);
+  }
+  20% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.card-shine {
+  animation: cardShine 3s ease-out infinite;
 }

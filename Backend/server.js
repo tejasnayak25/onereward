@@ -437,16 +437,25 @@ app.put("/api/customers/points/:id", async (req, res) => {
 app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
   try {
     const { restaurantName } = req.params;
-    console.log('Stats endpoint called for restaurant:', restaurantName);
+    console.log('📊 Stats endpoint called for restaurant:', restaurantName);
 
     // Get all users with points for this restaurant
     const usersWithPoints = await User.find({
       'availablePoints.restaurantName': restaurantName
     });
 
-    // Calculate total points issued
+    // Get all users with redemptions for this restaurant
+    const usersWithRedemptions = await User.find({
+      'redeemPoints.restaurantName': restaurantName
+    });
+
+    // Get all offers for this restaurant
+    const offers = await Offer.find({ restaurantName: restaurantName });
+
+    // Calculate basic stats
     let totalPointsIssued = 0;
     let totalUsers = usersWithPoints.length;
+    let activeUsers = 0; // Users with points > 0
 
     usersWithPoints.forEach(user => {
       const restaurantPoints = user.availablePoints.find(
@@ -454,17 +463,18 @@ app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
       );
       if (restaurantPoints) {
         totalPointsIssued += restaurantPoints.points;
+        if (restaurantPoints.points > 0) {
+          activeUsers++;
+        }
       }
     });
 
-    // Get redemption data
-    const usersWithRedemptions = await User.find({
-      'redeemPoints.restaurantName': restaurantName
-    });
-
+    // Calculate redemption stats
     let totalRedemptions = 0;
     let totalUsersRedeemed = 0;
     let highValueRedemptions = 0;
+    let recentRedemptions = 0;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     usersWithRedemptions.forEach(user => {
       const userRedemptions = user.redeemPoints.filter(
@@ -478,22 +488,365 @@ app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
           if (redemption.points > 150) {
             highValueRedemptions++;
           }
+          // Check if redemption is recent (last 30 days)
+          if (redemption.timestamp && new Date(redemption.timestamp) > thirtyDaysAgo) {
+            recentRedemptions++;
+          }
         });
       }
     });
 
+    // Calculate engagement metrics
+    const engagementRate = totalUsers > 0 ? Math.round((totalUsersRedeemed / totalUsers) * 100) : 0;
+    const redemptionRate = totalPointsIssued > 0 ? Math.round((totalRedemptions / totalPointsIssued) * 100) : 0;
+    const averagePointsPerUser = totalUsers > 0 ? Math.round(totalPointsIssued / totalUsers) : 0;
+    const averageRedemptionPerUser = totalUsersRedeemed > 0 ? Math.round(totalRedemptions / totalUsersRedeemed) : 0;
+
+    // Calculate growth metrics (last 30 days)
+    const newUsersLast30Days = usersWithPoints.filter(user => {
+      const userJoinDate = new Date(user.createdAt || user.join_date);
+      return userJoinDate > thirtyDaysAgo;
+    }).length;
+
+    // Get top customers who redeemed more than 150 points
+    const topRedeemers150Plus = await User.aggregate([
+      { $unwind: '$redeemPoints' },
+      {
+        $match: {
+          'redeemPoints.restaurantName': restaurantName,
+          'redeemPoints.points': { $gt: 150 }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id',
+          name: { $first: '$name' },
+          email: { $first: '$email' },
+          phone: { $first: '$phone' },
+          totalRedeemed: { $sum: '$redeemPoints.points' },
+          redemptionCount: { $sum: 1 }
+        }
+      },
+      { $sort: { totalRedeemed: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Get top customers who have more than 150 points
+    const topCustomers150Plus = await User.find({
+      availablePoints: {
+        $elemMatch: {
+          restaurantName: restaurantName,
+          points: { $gt: 150 }
+        }
+      }
+    }).limit(10);
+
+    const formattedTopCustomers150Plus = topCustomers150Plus.map(user => {
+      const restaurantPoints = user.availablePoints.find(
+        point => point.restaurantName === restaurantName
+      );
+      return {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        points: restaurantPoints?.points || 0
+      };
+    }).sort((a, b) => b.points - a.points); // Sort by points descending
+
     const stats = {
+      // Core Metrics (as requested)
+      totalUsers,
       totalPointsIssued,
       totalRedemptions,
-      totalUsers,
-      totalUsersRedeemed,
-      highValueRedemptions,
-      averagePointsPerUser: totalUsers > 0 ? Math.round(totalPointsIssued / totalUsers) : 0
+      totalOffers: offers.length,
+
+      // Top Customers (150+ points)
+      topCustomersOver150: formattedTopCustomers150Plus,
+      topRedeemersOver150: topRedeemers150Plus,
+
+      // Timestamp for real-time updates
+      lastUpdated: new Date().toISOString()
     };
 
+    console.log('📊 Stats calculated:', stats);
     res.status(200).json(stats);
   } catch (error) {
+    console.error('❌ Error fetching restaurant stats:', error);
     res.status(500).json({ message: "Error fetching restaurant stats", error });
+  }
+});
+
+// Download dashboard data as Excel
+app.get("/api/restaurant/:restaurantName/download-excel", async (req, res) => {
+  try {
+    const { restaurantName } = req.params;
+    console.log('📥 Excel download requested for restaurant:', restaurantName);
+
+    // Get all customers for this restaurant
+    const allCustomers = await User.find({
+      'availablePoints.restaurantName': restaurantName
+    });
+
+    // Get all redemptions for this restaurant
+    const allRedemptions = await User.aggregate([
+      { $unwind: '$redeemPoints' },
+      {
+        $match: {
+          'redeemPoints.restaurantName': restaurantName
+        }
+      },
+      {
+        $project: {
+          customerName: '$name',
+          customerEmail: '$email',
+          customerPhone: '$phone',
+          points: '$redeemPoints.points',
+          description: '$redeemPoints.description',
+          timestamp: '$redeemPoints.timestamp'
+        }
+      },
+      { $sort: { timestamp: -1 } }
+    ]);
+
+    // Format customer data
+    const customerData = allCustomers.map(user => {
+      const restaurantPoints = user.availablePoints.find(
+        point => point.restaurantName === restaurantName
+      );
+      const userRedemptions = user.redeemPoints?.filter(
+        redemption => redemption.restaurantName === restaurantName
+      ) || [];
+      const totalRedeemed = userRedemptions.reduce((sum, r) => sum + r.points, 0);
+
+      return {
+        Name: user.name,
+        Email: user.email,
+        Phone: user.phone,
+        'Current Points': restaurantPoints?.points || 0,
+        'Total Redeemed': totalRedeemed,
+        'Join Date': new Date(user.createdAt || user.join_date).toLocaleDateString(),
+        'Has Redeemed': userRedemptions.length > 0 ? 'Yes' : 'No'
+      };
+    });
+
+    // Format redemption data
+    const redemptionData = allRedemptions.map(redemption => ({
+      'Customer Name': redemption.customerName,
+      'Customer Email': redemption.customerEmail,
+      'Customer Phone': redemption.customerPhone,
+      'Points Redeemed': redemption.points,
+      'Description': redemption.description,
+      'Date': new Date(redemption.timestamp).toLocaleDateString(),
+      'Time': new Date(redemption.timestamp).toLocaleTimeString()
+    }));
+
+    // Create Excel-like data structure
+    const excelData = {
+      customers: customerData,
+      redemptions: redemptionData,
+      summary: {
+        'Total Customers': customerData.length,
+        'Total Points Issued': customerData.reduce((sum, c) => sum + c['Current Points'], 0),
+        'Total Points Redeemed': redemptionData.reduce((sum, r) => sum + r['Points Redeemed'], 0),
+        'Customers Who Redeemed': customerData.filter(c => c['Has Redeemed'] === 'Yes').length,
+        'Generated On': new Date().toLocaleString()
+      }
+    };
+
+    res.status(200).json({
+      success: true,
+      data: excelData,
+      filename: `${restaurantName}_dashboard_${new Date().toISOString().split('T')[0]}.json`
+    });
+  } catch (error) {
+    console.error('❌ Error generating Excel data:', error);
+    res.status(500).json({ message: "Error generating Excel data", error });
+  }
+});
+
+// Get all customers for restaurant (for Customers tab)
+app.get("/api/restaurant/:restaurantName/all-customers", async (req, res) => {
+  try {
+    const { restaurantName } = req.params;
+    console.log('👥 All customers requested for restaurant:', restaurantName);
+
+    // Get ALL users from the database (not just those with points for this restaurant)
+    const allCustomers = await User.find({});
+
+    // Format customer data with redemption info
+    const customerData = allCustomers.map(user => {
+      const restaurantPoints = user.availablePoints.find(
+        point => point.restaurantName === restaurantName
+      );
+
+      const userRedemptions = user.redeemPoints?.filter(
+        redemption => redemption.restaurantName === restaurantName
+      ) || [];
+
+      const totalRedeemed = userRedemptions.reduce((sum, r) => sum + r.points, 0);
+      const hasHighValueRedemption = userRedemptions.some(r => r.points > 150);
+      const lastRedemption = userRedemptions.length > 0
+        ? userRedemptions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
+        : null;
+
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        currentPoints: restaurantPoints?.points || 0,
+        totalRedeemed,
+        redemptionCount: userRedemptions.length,
+        hasRedeemed: userRedemptions.length > 0,
+        hasHighValueRedemption,
+        lastRedemption: lastRedemption ? {
+          points: lastRedemption.points,
+          description: lastRedemption.description,
+          date: lastRedemption.timestamp
+        } : null,
+        joinDate: user.createdAt || user.join_date,
+        status: 'active'
+      };
+    });
+
+    // Sort by current points (highest first)
+    customerData.sort((a, b) => b.currentPoints - a.currentPoints);
+
+    // Calculate stats for ALL customers but restaurant-specific data
+    const customersWithRestaurantPoints = customerData.filter(c => c.currentPoints > 0);
+    const customersWithRedemptions = customerData.filter(c => c.hasRedeemed);
+    const customersWithHighValue = customerData.filter(c => c.hasHighValueRedemption);
+
+    res.status(200).json({
+      success: true,
+      customers: customerData,
+      totalCount: customerData.length, // Total count of ALL users in database
+      stats: {
+        totalCustomers: customerData.length, // ALL users in database
+        customersWithPoints: customersWithRestaurantPoints.length, // Users with points for this restaurant
+        customersWithRedemptions: customersWithRedemptions.length,
+        customersWithHighValue: customersWithHighValue.length,
+        totalPointsIssued: customerData.reduce((sum, c) => sum + c.currentPoints, 0),
+        totalPointsRedeemed: customerData.reduce((sum, c) => sum + c.totalRedeemed, 0)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error fetching all customers:', error);
+    res.status(500).json({ message: "Error fetching customers", error });
+  }
+});
+
+// Get real-time analytics for restaurant dashboard
+app.get("/api/restaurant/:restaurantName/analytics", async (req, res) => {
+  try {
+    const { restaurantName } = req.params;
+    console.log('📈 Analytics endpoint called for restaurant:', restaurantName);
+
+    // Get recent activity (last 7 days)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+    // Get users with recent activity
+    const recentUsers = await User.find({
+      $or: [
+        { 'availablePoints.restaurantName': restaurantName },
+        { 'redeemPoints.restaurantName': restaurantName }
+      ],
+      $or: [
+        { createdAt: { $gte: sevenDaysAgo } },
+        { updatedAt: { $gte: sevenDaysAgo } }
+      ]
+    });
+
+    // Calculate daily stats for the last 7 days
+    const dailyStats = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const dayStart = new Date(date.setHours(0, 0, 0, 0));
+      const dayEnd = new Date(date.setHours(23, 59, 59, 999));
+
+      // Count new users for this day
+      const newUsers = await User.countDocuments({
+        'availablePoints.restaurantName': restaurantName,
+        createdAt: { $gte: dayStart, $lte: dayEnd }
+      });
+
+      // Count redemptions for this day
+      const redemptions = await User.aggregate([
+        { $unwind: '$redeemPoints' },
+        {
+          $match: {
+            'redeemPoints.restaurantName': restaurantName,
+            'redeemPoints.timestamp': { $gte: dayStart, $lte: dayEnd }
+          }
+        },
+        { $count: 'total' }
+      ]);
+
+      dailyStats.push({
+        date: dayStart.toISOString().split('T')[0],
+        newUsers,
+        redemptions: redemptions[0]?.total || 0,
+        day: dayStart.toLocaleDateString('en-US', { weekday: 'short' })
+      });
+    }
+
+    // Get top customers by points
+    const topCustomers = await User.find({
+      'availablePoints.restaurantName': restaurantName
+    }).sort({ 'availablePoints.points': -1 }).limit(5);
+
+    const formattedTopCustomers = topCustomers.map(user => {
+      const restaurantPoints = user.availablePoints.find(
+        point => point.restaurantName === restaurantName
+      );
+      return {
+        name: user.name,
+        email: user.email,
+        points: restaurantPoints?.points || 0,
+        joinDate: user.createdAt || user.join_date
+      };
+    });
+
+    // Get recent redemptions
+    const recentRedemptions = await User.aggregate([
+      { $unwind: '$redeemPoints' },
+      {
+        $match: {
+          'redeemPoints.restaurantName': restaurantName,
+          'redeemPoints.timestamp': { $gte: sevenDaysAgo }
+        }
+      },
+      { $sort: { 'redeemPoints.timestamp': -1 } },
+      { $limit: 10 },
+      {
+        $project: {
+          customerName: '$name',
+          points: '$redeemPoints.points',
+          description: '$redeemPoints.description',
+          timestamp: '$redeemPoints.timestamp'
+        }
+      }
+    ]);
+
+    const analytics = {
+      dailyStats,
+      topCustomers: formattedTopCustomers,
+      recentRedemptions,
+      summary: {
+        weeklyNewUsers: dailyStats.reduce((sum, day) => sum + day.newUsers, 0),
+        weeklyRedemptions: dailyStats.reduce((sum, day) => sum + day.redemptions, 0),
+        averageDailyUsers: Math.round(dailyStats.reduce((sum, day) => sum + day.newUsers, 0) / 7),
+        averageDailyRedemptions: Math.round(dailyStats.reduce((sum, day) => sum + day.redemptions, 0) / 7)
+      },
+      lastUpdated: new Date().toISOString()
+    };
+
+    console.log('📈 Analytics calculated for', restaurantName);
+    res.status(200).json(analytics);
+  } catch (error) {
+    console.error('❌ Error fetching restaurant analytics:', error);
+    res.status(500).json({ message: "Error fetching restaurant analytics", error });
   }
 });
 
@@ -925,8 +1278,6 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-
-
 app.post("/api/customer/scan-qr", async (req, res) => {
   try {
     console.log("=== QR SCAN REQUEST ===");
@@ -1118,6 +1469,61 @@ app.get("/api/test/users", async (req, res) => {
   } catch (err) {
     console.error("Error fetching users:", err);
     return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Test endpoint specifically for customer3 points debugging
+app.get("/api/test/customer3-points/:restaurantName", async (req, res) => {
+  try {
+    const { restaurantName } = req.params;
+    console.log("🧪 Testing customer3 points for restaurant:", restaurantName);
+
+    // Find customer3 by email
+    const customer = await User.findOne({ email: "customer3@gmail.com" });
+
+    if (!customer) {
+      return res.status(404).json({ success: false, message: "Customer3 not found" });
+    }
+
+    console.log("🧪 Customer3 found:", customer.name);
+    console.log("🧪 Customer3 availablePoints:", JSON.stringify(customer.availablePoints, null, 2));
+
+    // Test the restaurant matching logic
+    let restaurantPoints = 0;
+    if (customer.availablePoints && Array.isArray(customer.availablePoints)) {
+      console.log("🧪 Searching through availablePoints array...");
+      const restaurantPointsObj = customer.availablePoints.find(
+        point => {
+          console.log(`🧪 Checking: "${point.restaurantName}" === "${restaurantName}"`);
+          console.log(`🧪 Match result: ${point.restaurantName === restaurantName}`);
+          return point.restaurantName === restaurantName;
+        }
+      );
+
+      if (restaurantPointsObj) {
+        restaurantPoints = restaurantPointsObj.points;
+        console.log(`🧪 ✅ Found points: ${restaurantPoints}`);
+      } else {
+        console.log(`🧪 ❌ No points found for restaurant: ${restaurantName}`);
+        console.log("🧪 Available restaurants:", customer.availablePoints.map(p => `"${p.restaurantName}"`));
+      }
+    }
+
+    res.json({
+      success: true,
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone
+      },
+      requestedRestaurant: restaurantName,
+      availablePoints: customer.availablePoints,
+      foundPoints: restaurantPoints,
+      availableRestaurants: customer.availablePoints ? customer.availablePoints.map(p => p.restaurantName) : []
+    });
+  } catch (error) {
+    console.error("🧪 Error testing customer3 points:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

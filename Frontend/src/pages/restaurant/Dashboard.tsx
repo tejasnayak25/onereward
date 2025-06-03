@@ -3,16 +3,59 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Activity, Target, Award, Clock, RefreshCw } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import axios from "axios";
 
 interface DashboardStats {
+  totalUsers: number;
   totalPointsIssued: number;
   totalRedemptions: number;
-  totalUsers: number;
-  totalUsersRedeemed: number;
-  highValueRedemptions: number;
-  averagePointsPerUser: number;
+  totalOffers: number;
+  topCustomersOver150: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    points: number;
+  }>;
+  topRedeemersOver150: Array<{
+    name: string;
+    email: string;
+    phone: string;
+    totalRedeemed: number;
+    redemptionCount: number;
+  }>;
+  lastUpdated: string;
+}
+
+interface Analytics {
+  dailyStats: Array<{
+    date: string;
+    newUsers: number;
+    redemptions: number;
+    day: string;
+  }>;
+  topCustomers: Array<{
+    name: string;
+    email: string;
+    points: number;
+    joinDate: string;
+  }>;
+  recentRedemptions: Array<{
+    customerName: string;
+    points: number;
+    description: string;
+    timestamp: string;
+  }>;
+  summary: {
+    weeklyNewUsers: number;
+    weeklyRedemptions: number;
+    averageDailyUsers: number;
+    averageDailyRedemptions: number;
+  };
+  lastUpdated: string;
 }
 
 interface Redemption {
@@ -30,10 +73,37 @@ const RestaurantDashboard = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    // Load auto-refresh preference from localStorage
+    const saved = localStorage.getItem('restaurant-auto-refresh');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (autoRefresh) {
+      // Set up auto-refresh every 1 minute when enabled
+      interval = setInterval(fetchDashboardData, 60000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [autoRefresh]);
+
+  const handleAutoRefreshToggle = (checked: boolean) => {
+    setAutoRefresh(checked);
+    // Save preference to localStorage
+    localStorage.setItem('restaurant-auto-refresh', JSON.stringify(checked));
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -42,46 +112,86 @@ const RestaurantDashboard = () => {
       const user = localStorage.getItem("user");
       const restaurantName = user ? JSON.parse(user).name || "" : "";
 
-      // For now, use mock data since backend endpoints are having issues
-      // TODO: Replace with actual API calls once backend is fixed
-      const mockStats = {
-        totalPointsIssued: 2450,
-        totalRedemptions: 850,
-        totalUsers: 45,
-        totalUsersRedeemed: 12,
-        highValueRedemptions: 3,
-        averagePointsPerUser: 54
-      };
+      if (!restaurantName) {
+        console.error("No restaurant name found in localStorage");
+        return;
+      }
 
-      const mockRedemptions = [
-        {
-          _id: "1",
-          customerName: "John Doe",
-          customerEmail: "john@example.com",
-          customerPhone: "555-0123",
-          points: 200,
-          description: "Free meal",
-          redeemedAt: new Date().toISOString(),
-          isHighValue: true
-        },
-        {
-          _id: "2",
-          customerName: "Jane Smith",
-          customerEmail: "jane@example.com",
-          customerPhone: "555-0456",
-          points: 100,
-          description: "Discount voucher",
-          redeemedAt: new Date(Date.now() - 86400000).toISOString(),
-          isHighValue: false
-        }
-      ];
+      console.log("📊 Fetching dashboard data for:", restaurantName);
 
-      setStats(mockStats);
-      setRedemptions(mockRedemptions);
+      // Fetch stats and redemptions
+      const [statsResponse, redemptionsResponse] = await Promise.all([
+        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/stats`),
+        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/redemptions`)
+      ]);
+
+      console.log("✅ Stats data:", statsResponse.data);
+      console.log("✅ Redemptions data:", redemptionsResponse.data);
+
+      setStats(statsResponse.data);
+      setRedemptions(redemptionsResponse.data.redemptions || []);
+      setLastRefresh(new Date());
     } catch (error) {
-      console.error("Error fetching dashboard data:", error);
+      console.error("❌ Error fetching dashboard data:", error);
+      // Keep existing data on error, don't clear it
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadExcel = async () => {
+    try {
+      const user = localStorage.getItem("user");
+      const restaurantName = user ? JSON.parse(user).name || "" : "";
+
+      if (!restaurantName) {
+        console.error("No restaurant name found");
+        return;
+      }
+
+      console.log("📥 Downloading Excel data for:", restaurantName);
+
+      const response = await axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/download-excel`);
+
+      // Convert to CSV format for easy Excel import
+      const data = response.data.data;
+
+      // Create CSV content
+      let csvContent = "data:text/csv;charset=utf-8,";
+
+      // Add summary
+      csvContent += "DASHBOARD SUMMARY\n";
+      csvContent += `Total Customers,${data.summary['Total Customers']}\n`;
+      csvContent += `Total Points Issued,${data.summary['Total Points Issued']}\n`;
+      csvContent += `Total Points Redeemed,${data.summary['Total Points Redeemed']}\n`;
+      csvContent += `Customers Who Redeemed,${data.summary['Customers Who Redeemed']}\n`;
+      csvContent += `Generated On,${data.summary['Generated On']}\n\n`;
+
+      // Add customers data
+      csvContent += "CUSTOMERS DATA\n";
+      csvContent += "Name,Email,Phone,Current Points,Total Redeemed,Join Date,Has Redeemed\n";
+      data.customers.forEach((customer: any) => {
+        csvContent += `${customer.Name},${customer.Email},${customer.Phone},${customer['Current Points']},${customer['Total Redeemed']},${customer['Join Date']},${customer['Has Redeemed']}\n`;
+      });
+
+      csvContent += "\nREDEMPTIONS DATA\n";
+      csvContent += "Customer Name,Customer Email,Customer Phone,Points Redeemed,Description,Date,Time\n";
+      data.redemptions.forEach((redemption: any) => {
+        csvContent += `${redemption['Customer Name']},${redemption['Customer Email']},${redemption['Customer Phone']},${redemption['Points Redeemed']},${redemption.Description},${redemption.Date},${redemption.Time}\n`;
+      });
+
+      // Download file
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${restaurantName}_dashboard_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      console.log("✅ Excel file downloaded successfully");
+    } catch (error) {
+      console.error("❌ Error downloading Excel:", error);
     }
   };
 
@@ -115,41 +225,42 @@ const RestaurantDashboard = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Restaurant Dashboard</h2>
           <p className="text-muted-foreground">
-            Complete overview of your loyalty program performance
+            Complete overview of your loyalty program
           </p>
+          <p className="text-xs text-muted-foreground">
+            Last updated: {lastRefresh.toLocaleTimeString()} • {autoRefresh ? 'Auto-refreshes every 1 minute' : 'Auto-refresh disabled'}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Activity className={`h-4 w-4 ${autoRefresh ? 'text-green-500' : 'text-gray-400'}`} />
+            <span className={`text-sm ${autoRefresh ? 'text-green-600' : 'text-gray-500'}`}>
+              {autoRefresh ? 'Live Data' : 'Manual Mode'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoRefresh}
+              onCheckedChange={handleAutoRefreshToggle}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <span className="text-sm text-muted-foreground">Auto-refresh</span>
+          </div>
+          <Button onClick={fetchDashboardData} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
+          <Button onClick={downloadExcel} variant="outline" className="flex items-center gap-2">
+            <Gift className="h-4 w-4" />
+            Download Excel
+          </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Points Issued</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPointsIssued || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Avg {stats?.averagePointsPerUser || 0} per user
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Redemptions</CardTitle>
-            <Gift className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalRedemptions || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Points redeemed by customers
-            </p>
-          </CardContent>
-        </Card>
-
+      {/* Core Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -165,129 +276,43 @@ const RestaurantDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Users Who Redeemed</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Redeemed Points</CardTitle>
+            <Gift className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalUsersRedeemed || 0}</div>
+            <div className="text-2xl font-bold">{stats?.totalRedemptions?.toLocaleString() || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {stats?.totalUsers ? Math.round((stats.totalUsersRedeemed / stats.totalUsers) * 100) : 0}% engagement rate
+              Points used by customers
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">High-Value Redemptions</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Issued Points</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.highValueRedemptions || 0}</div>
+            <div className="text-2xl font-bold">{stats?.totalPointsIssued?.toLocaleString() || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Redemptions over 150 points
+              Total points distributed
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Redemption Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Active Offers</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {stats?.totalPointsIssued ? Math.round((stats.totalRedemptions / stats.totalPointsIssued) * 100) : 0}%
-            </div>
+            <div className="text-2xl font-bold">{stats?.totalOffers || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Points redeemed vs issued
+              Available offers
             </p>
           </CardContent>
         </Card>
       </div>
-
-      {/* Redemption History Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Redemptions</CardTitle>
-          <CardDescription>
-            Complete redemption history with high-value transactions highlighted
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {redemptions.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              No redemptions found.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Points</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {redemptions.slice(0, 10).map((redemption) => (
-                  <TableRow key={redemption._id} className={redemption.isHighValue ? "bg-red-50" : ""}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium flex items-center gap-2">
-                          {redemption.customerName}
-                          {redemption.isHighValue && (
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {redemption.customerEmail}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {redemption.customerPhone}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRedemptionBadgeColor(redemption.points)}>
-                        {redemption.points} pts
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate">
-                        {redemption.description}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(redemption.redeemedAt)}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* High-Value Redemptions Alert */}
-      {stats && stats.highValueRedemptions > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-800 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              High-Value Redemption Alert
-            </CardTitle>
-            <CardDescription className="text-red-700">
-              You have {stats.highValueRedemptions} redemption(s) over 150 points that may require special attention.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
     </div>
   );
 };

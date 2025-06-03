@@ -94,9 +94,9 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
   }
 
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative w-full group ${className}`}>
       <div
-        className="aspect-[1.6/1] rounded-xl shadow-xl overflow-hidden relative border border-gray-200"
+        className="aspect-[1.6/1] rounded-xl shadow-xl overflow-hidden relative border border-gray-200 transition-all duration-300 group-hover:shadow-2xl"
         style={{
           backgroundColor: '#FFD700',
           backgroundImage: cardImage ? `url(${cardImage})` : 'none',
@@ -109,6 +109,9 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
           <div className="absolute inset-0 bg-black/10"></div>
         )}
 
+        {/* Continuous shine effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent card-shine"></div>
+
         {/* Card Content */}
         <div className="relative h-full p-4 flex flex-col justify-between text-black">
           {/* Top Section - Points only */}
@@ -120,7 +123,7 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
 
           {/* Bottom Section */}
           <div className="flex justify-between items-end">
-            <div className="space-y-2 max-w-[45%]">
+            <div className="space-y-2 max-w-[40%]">
               <div className="bg-white/95 px-3 py-1.5 rounded-lg text-sm font-bold text-gray-900 shadow-md backdrop-blur-sm">
                 {restaurantName}
               </div>
@@ -128,15 +131,15 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
                 {userPhone}
               </div>
             </div>
-            <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center shadow-lg">
+            <div className="w-32 h-32 bg-white rounded-lg flex items-center justify-center shadow-lg p-0.5">
               {qrCode ? (
                 <img
                   src={`data:image/png;base64,${qrCode}`}
                   alt="User QR Code"
-                  className="h-28 w-28 rounded"
+                  className="h-31 w-31 rounded"
                 />
               ) : (
-                <QrCode className="h-24 w-24 text-black" />
+                <QrCode className="h-28 w-28 text-black" />
               )}
             </div>
           </div>

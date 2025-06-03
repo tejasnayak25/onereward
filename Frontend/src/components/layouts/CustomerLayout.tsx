@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { Home, CreditCard, Wifi, LogOut, QrCode } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +13,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import axios from "axios";
 
 const CustomerLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
 
   const [username, setUsername] = useState("");
   const [initials, setInitials] = useState("U");
@@ -33,6 +30,14 @@ const CustomerLayout = () => {
     if (storedUser) {
       try {
         const parsed = JSON.parse(storedUser);
+
+        // Verify this is a customer user (not restaurant/admin/scanner)
+        if (!parsed.email) {
+          localStorage.removeItem("user");
+          navigate("/login");
+          return;
+        }
+
         const name = parsed.name || parsed.email || "User";
         setUsername(name);
 
@@ -43,6 +48,17 @@ const CustomerLayout = () => {
             : nameParts[0].charAt(0) + nameParts[1]?.charAt(0);
         setInitials(initials.toUpperCase());
 
+        // Apply saved dark mode preference
+        const userEmail = parsed.email;
+        if (userEmail) {
+          const savedDarkMode = localStorage.getItem(`customer-dark-mode-${userEmail}`);
+          if (savedDarkMode !== null && JSON.parse(savedDarkMode)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+
         // Fetch QR Code
         axios
           .get(`/api/user-qr/${parsed.email}`)
@@ -51,14 +67,23 @@ const CustomerLayout = () => {
               setQrCode(res.data.qrCode);
             }
           })
-          .catch((err) => console.error("QR Fetch error:", err));
-      } catch {
-        setUsername("User");
+          .catch((err) => {
+            console.error("QR Fetch error:", err);
+            // If QR fetch fails, user might not be valid customer
+            if (err.response?.status === 404 || err.response?.status === 401) {
+              localStorage.removeItem("user");
+              navigate("/login");
+            }
+          });
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        localStorage.removeItem("user");
+        navigate("/login");
       }
     } else {
       navigate("/login");
     }
-  }, []);
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -73,7 +98,7 @@ const CustomerLayout = () => {
       {/* Header */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-border bg-white/95 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center">
-          <h1 className="text-xl font-semibold text-primary">Loyalty App</h1>
+          <h1 className="text-xl font-semibold text-primary">One Reward</h1>
           <div className="ml-2 flex items-center text-xs text-primary/70">
             <Wifi className="h-3 w-3 mr-1 animate-pulse" />
             <span>Live</span>
@@ -96,15 +121,10 @@ const CustomerLayout = () => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() =>
-                toast({
-                  title: "Account",
-                  description: "Account settings will be available in a future update.",
-                })
-              }
-            >
-              Account Settings
+            <DropdownMenuItem asChild>
+              <Link to="/customer/account-settings" className="w-full">
+                Account Settings
+              </Link>
             </DropdownMenuItem>
 
             <DropdownMenuItem onClick={() => setOpenQrDialog(true)}>
