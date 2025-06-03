@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Activity, Target, Award, Clock } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Activity, Target, Award, Clock, RefreshCw } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import axios from "axios";
 
@@ -73,13 +74,36 @@ const RestaurantDashboard = () => {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    // Load auto-refresh preference from localStorage
+    const saved = localStorage.getItem('restaurant-auto-refresh');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     fetchDashboardData();
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (autoRefresh) {
+      // Set up auto-refresh every 1 minute when enabled
+      interval = setInterval(fetchDashboardData, 60000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [autoRefresh]);
+
+  const handleAutoRefreshToggle = (checked: boolean) => {
+    setAutoRefresh(checked);
+    // Save preference to localStorage
+    localStorage.setItem('restaurant-auto-refresh', JSON.stringify(checked));
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -206,14 +230,28 @@ const RestaurantDashboard = () => {
             Complete overview of your loyalty program
           </p>
           <p className="text-xs text-muted-foreground">
-            Last updated: {lastRefresh.toLocaleTimeString()} • Auto-refreshes every 30s
+            Last updated: {lastRefresh.toLocaleTimeString()} • {autoRefresh ? 'Auto-refreshes every 1 minute' : 'Auto-refresh disabled'}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-sm text-green-600">Live Data</span>
+            <Activity className={`h-4 w-4 ${autoRefresh ? 'text-green-500' : 'text-gray-400'}`} />
+            <span className={`text-sm ${autoRefresh ? 'text-green-600' : 'text-gray-500'}`}>
+              {autoRefresh ? 'Live Data' : 'Manual Mode'}
+            </span>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoRefresh}
+              onCheckedChange={handleAutoRefreshToggle}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <span className="text-sm text-muted-foreground">Auto-refresh</span>
+          </div>
+          <Button onClick={fetchDashboardData} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
           <Button onClick={downloadExcel} variant="outline" className="flex items-center gap-2">
             <Gift className="h-4 w-4" />
             Download Excel
@@ -238,20 +276,7 @@ const RestaurantDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Points Issued</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats?.totalPointsIssued?.toLocaleString() || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Total points distributed
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Points Redeemed</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Redeemed Points</CardTitle>
             <Gift className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -264,7 +289,20 @@ const RestaurantDashboard = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Offers</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Issued Points</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalPointsIssued?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Total points distributed
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Active Offers</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -275,204 +313,6 @@ const RestaurantDashboard = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Top Customers Sections */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Customers (150+ Points)</CardTitle>
-            <CardDescription>Customers who currently have more than 150 points</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats?.topCustomersOver150?.slice(0, 10).map((customer, index) => (
-                <div key={customer.email} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-sm font-medium text-green-700">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{customer.email}</p>
-                      <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                      {customer.points} pts
-                    </Badge>
-                  </div>
-                </div>
-              )) || (
-                <div className="text-center py-8 text-muted-foreground">
-                  No customers with 150+ points
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Redeemers (150+ Points)</CardTitle>
-            <CardDescription>Customers who redeemed more than 150 points</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {stats?.topRedeemersOver150?.slice(0, 10).map((customer, index) => (
-                <div key={customer.email} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-sm font-medium text-red-700">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">{customer.email}</p>
-                      <p className="text-xs text-muted-foreground">{customer.phone}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
-                      {customer.totalRedeemed} pts
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {customer.redemptionCount} redemptions
-                    </p>
-                  </div>
-                </div>
-              )) || (
-                <div className="text-center py-8 text-muted-foreground">
-                  No high-value redeemers
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Redemptions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Redemptions</CardTitle>
-          <CardDescription>Latest redemption activity from your customers</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {redemptions && redemptions.length > 0 ? (
-            <div className="space-y-3">
-              {redemptions.slice(0, 10).map((redemption, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                      <Gift className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{redemption.customerName}</p>
-                      <p className="text-sm text-muted-foreground">{redemption.customerEmail}</p>
-                      <p className="text-xs text-muted-foreground">{redemption.customerPhone}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge className={getRedemptionBadgeColor(redemption.points)}>
-                      {redemption.points} pts
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {formatDate(redemption.redeemedAt)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No recent redemptions
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Redemption History Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Redemptions</CardTitle>
-          <CardDescription>
-            Complete redemption history with high-value transactions highlighted
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {redemptions.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              No redemptions found.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Points</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {redemptions.slice(0, 10).map((redemption) => (
-                  <TableRow key={redemption._id} className={redemption.isHighValue ? "bg-red-50" : ""}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium flex items-center gap-2">
-                          {redemption.customerName}
-                          {redemption.isHighValue && (
-                            <AlertTriangle className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {redemption.customerEmail}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {redemption.customerPhone}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRedemptionBadgeColor(redemption.points)}>
-                        {redemption.points} pts
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-xs truncate">
-                        {redemption.description}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(redemption.redeemedAt)}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* High-Value Redemptions Alert */}
-      {stats && stats.highValueRedemptions > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="text-red-800 flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              High-Value Redemption Alert
-            </CardTitle>
-            <CardDescription className="text-red-700">
-              You have {stats.highValueRedemptions} redemption(s) over 150 points that may require special attention.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
     </div>
   );
 };

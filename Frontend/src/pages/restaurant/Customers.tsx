@@ -4,7 +4,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Users, Search, Download, Phone, Mail, Calendar, Gift, Activity } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Loader2, Users, Search, Download, Phone, Mail, Calendar, Gift, Activity, RefreshCw } from "lucide-react";
 import axios from "axios";
 
 interface Customer {
@@ -42,13 +43,36 @@ const RestaurantCustomers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(() => {
+    // Load auto-refresh preference from localStorage
+    const saved = localStorage.getItem('restaurant-auto-refresh');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   useEffect(() => {
     fetchCustomers();
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(fetchCustomers, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    if (autoRefresh) {
+      // Set up auto-refresh every 1 minute when enabled
+      interval = setInterval(fetchCustomers, 60000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [autoRefresh]);
+
+  const handleAutoRefreshToggle = (checked: boolean) => {
+    setAutoRefresh(checked);
+    // Save preference to localStorage
+    localStorage.setItem('restaurant-auto-refresh', JSON.stringify(checked));
+  };
 
   useEffect(() => {
     // Filter customers based on search term
@@ -163,107 +187,34 @@ const RestaurantCustomers = () => {
             All customers registered with your restaurant
           </p>
           <p className="text-xs text-muted-foreground">
-            Last updated: {lastRefresh.toLocaleTimeString()} • Auto-refreshes every 30s
+            Last updated: {lastRefresh.toLocaleTimeString()} • {autoRefresh ? 'Auto-refreshes every 1 minute' : 'Auto-refresh disabled'}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-sm text-green-600">Live Data</span>
+            <Activity className={`h-4 w-4 ${autoRefresh ? 'text-green-500' : 'text-gray-400'}`} />
+            <span className={`text-sm ${autoRefresh ? 'text-green-600' : 'text-gray-500'}`}>
+              {autoRefresh ? 'Live Data' : 'Manual Mode'}
+            </span>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={autoRefresh}
+              onCheckedChange={handleAutoRefreshToggle}
+              className="data-[state=checked]:bg-green-500"
+            />
+            <span className="text-sm text-muted-foreground">Auto-refresh</span>
+          </div>
+          <Button onClick={fetchCustomers} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
           <Button onClick={downloadCustomersCSV} variant="outline" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
             Download CSV
           </Button>
-          <Button onClick={fetchCustomers} variant="outline" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Refresh
-          </Button>
         </div>
       </div>
-
-      {/* Customer Stats */}
-      {stats && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCustomers}</div>
-              <p className="text-xs text-muted-foreground">
-                All users in database
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">With Points</CardTitle>
-              <Gift className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{stats.customersWithPoints}</div>
-              <p className="text-xs text-muted-foreground">
-                Have points for this restaurant
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">With Redemptions</CardTitle>
-              <Gift className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.customersWithRedemptions}</div>
-              <p className="text-xs text-muted-foreground">
-                Have redeemed points
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">High Value (150+)</CardTitle>
-              <Gift className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.customersWithHighValue}</div>
-              <p className="text-xs text-muted-foreground">
-                Redeemed 150+ points
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Points Issued</CardTitle>
-              <Gift className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalPointsIssued.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                Total distributed
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Points Redeemed</CardTitle>
-              <Gift className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalPointsRedeemed.toLocaleString()}</div>
-              <p className="text-xs text-muted-foreground">
-                Total used
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Search */}
       <Card>

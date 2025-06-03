@@ -29,6 +29,7 @@ import ScannerApp from "./pages/scanner/ScannerApp";
 import CustomerHome from "./pages/customer/Home";
 import CustomerCards from "./pages/customer/Cards";
 import CustomerCardDetail from "./pages/customer/CardDetail";
+import AccountSettings from "./pages/customer/AccountSettings";
 
 // Auth pages
 import Login from "./pages/auth/Login";
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="home" element={<CustomerHome />} />
             <Route path="cards" element={<CustomerCards />} />
             <Route path="cards/:id" element={<CustomerCardDetail />} />
+            <Route path="account-settings" element={<AccountSettings />} />
           </Route>
           
           {/* Catch-all Route */}
