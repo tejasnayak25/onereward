@@ -469,20 +469,18 @@ const ScannerApp = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
+              <div className="flex items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-green-600 mr-3">
                   <UserCircle className="h-6 w-6" />
                 </div>
-                <div>
-                  <div className="font-medium">{customer.name}</div>
-                  <div className="text-sm text-muted-foreground">{customer.phone}</div>
+                <div className="flex-1">
+                  <div className="font-semibold text-green-800">{customer.name}</div>
+                  <div className="text-sm text-green-600">{customer.phone}</div>
+                  <div className="text-xs text-green-500 mt-1">✓ Customer Found</div>
                 </div>
               </div>
 
-              <div className="bg-muted p-4 rounded-lg flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">Current Points</div>
-                <div className="text-2xl font-bold">{customer.totalPoints}</div>
-              </div>
+
 
               {customer.qrCode && (
                 <div className="flex flex-col items-center">
@@ -502,37 +500,43 @@ const ScannerApp = () => {
                 </div>
               )}
 
-              <div className="grid gap-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="points">Points to {transactionType === "add" ? "Add" : "Redeem"}</Label>
-                  <div className="flex items-center space-x-2">
+              <div className="grid gap-4">
+                <div>
+                  <Label htmlFor="points">Points Amount</Label>
+                  <Input
+                    id="points"
+                    type="number"
+                    value={pointsValue}
+                    onChange={(e) => setPointsValue(e.target.value)}
+                    min="1"
+                    placeholder="Enter points amount"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium">Transaction Type</Label>
+                  <div className="flex gap-2 mt-2">
                     <Button
-                      variant="outline"
+                      variant={transactionType === "add" ? "default" : "outline"}
                       size="sm"
-                      className="h-8 w-8 rounded-full p-0"
+                      className="flex-1"
                       onClick={() => setTransactionType("add")}
-                      disabled={transactionType === "add"}
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Points
                     </Button>
                     <Button
-                      variant="outline"
+                      variant={transactionType === "redeem" ? "default" : "outline"}
                       size="sm"
-                      className="h-8 w-8 rounded-full p-0"
+                      className="flex-1"
                       onClick={() => setTransactionType("redeem")}
-                      disabled={transactionType === "redeem"}
                     >
-                      <Minus className="h-4 w-4" />
+                      <Minus className="h-4 w-4 mr-2" />
+                      Redeem Points
                     </Button>
                   </div>
                 </div>
-                <Input
-                  id="points"
-                  type="number"
-                  value={pointsValue}
-                  onChange={(e) => setPointsValue(e.target.value)}
-                  min="1"
-                />
               </div>
             </div>
           </CardContent>
@@ -564,21 +568,18 @@ const ScannerApp = () => {
                 <div className="text-sm text-muted-foreground">Customer</div>
                 <div className="font-medium">{customer.name}</div>
 
+                <div className="text-sm text-muted-foreground">Phone</div>
+                <div className="font-medium">{customer.phone}</div>
+
                 <div className="text-sm text-muted-foreground">Transaction Type</div>
-                <div className="font-medium capitalize">{transactionType} Points</div>
+                <div className="font-medium capitalize">
+                  <span className={transactionType === "add" ? "text-green-600" : "text-red-600"}>
+                    {transactionType === "add" ? "Add" : "Redeem"} Points
+                  </span>
+                </div>
 
                 <div className="text-sm text-muted-foreground">Points Amount</div>
                 <div className="font-medium">{pointsValue}</div>
-
-                {/* <div className="text-sm text-muted-foreground">Current Points</div>
-                <div className="font-medium">{customer.totalPoints}</div>
-
-                <div className="text-sm text-muted-foreground">New Balance</div>
-                <div className="font-bold">
-                  {transactionType === "add"
-                    ? customer.totalPoints + parseInt(pointsValue)
-                    : customer.totalPoints - parseInt(pointsValue)}
-                </div> */}
               </div>
             </div>
           )}
