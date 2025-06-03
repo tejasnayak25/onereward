@@ -73,7 +73,7 @@ const CustomerLayout = () => {
       {/* Header */}
       <header className="h-16 flex items-center justify-between px-6 border-b border-border bg-white/95 backdrop-blur-sm fixed top-0 left-0 right-0 z-50">
         <div className="flex items-center">
-          <h1 className="text-xl font-semibold text-primary">Loyalty App</h1>
+          <h1 className="text-xl font-semibold text-primary">One Reward</h1>
           <div className="ml-2 flex items-center text-xs text-primary/70">
             <Wifi className="h-3 w-3 mr-1 animate-pulse" />
             <span>Live</span>
