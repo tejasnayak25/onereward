@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Leaf, Flame, Star, IndianRupee } from "lucide-react";
+import { ArrowLeft, Leaf, Flame, Star, DollarSign } from "lucide-react";
 import axios from "axios";
 
 interface MenuCategory {
@@ -205,7 +205,7 @@ const RestaurantMenu = () => {
                             <div className="flex justify-between items-start mb-2">
                               <h4 className="font-semibold text-lg">{item.name}</h4>
                               <div className="flex items-center text-lg font-bold text-primary">
-                                <IndianRupee className="h-4 w-4" />
+                                <DollarSign className="h-4 w-4" />
                                 {item.price}
                               </div>
                             </div>

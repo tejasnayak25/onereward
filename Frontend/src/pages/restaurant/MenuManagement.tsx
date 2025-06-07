@@ -15,13 +15,13 @@ import {
   DialogTitle, 
   DialogTrigger 
 } from "@/components/ui/dialog";
-import { 
-  Plus, 
-  Edit, 
-  Trash2, 
-  ChefHat, 
-  Utensils, 
-  IndianRupee,
+import {
+  Plus,
+  Edit,
+  Trash2,
+  ChefHat,
+  Utensils,
+  DollarSign,
   Leaf,
   Flame,
   Save,
@@ -44,7 +44,7 @@ interface MenuItem {
   description?: string;
   price: number;
   image?: string;
-  categoryId: string;
+  categoryId: string | { _id: string; name: string };
   options: {
     isVeg: boolean;
     isNonVeg: boolean;
@@ -113,8 +113,20 @@ const MenuManagement = () => {
         axios.get(`/api/restaurant/${encodedName}/menu/items`)
       ]);
 
+      console.log('Categories fetched:', categoriesRes.data);
+      console.log('Items fetched:', itemsRes.data);
+
       setCategories(categoriesRes.data);
       setItems(itemsRes.data);
+
+      // Debug: Log category IDs and item categoryIds for comparison
+      console.log('Category IDs:', categoriesRes.data.map((cat: any) => ({ id: cat._id, name: cat.name })));
+      console.log('Item categoryIds:', itemsRes.data.map((item: any) => ({
+        name: item.name,
+        categoryId: item.categoryId,
+        categoryIdType: typeof item.categoryId,
+        categoryIdString: item.categoryId?.toString ? item.categoryId.toString() : item.categoryId
+      })));
     } catch (error) {
       console.error("Error fetching menu data:", error);
       toast({
@@ -351,7 +363,7 @@ const MenuManagement = () => {
         description: item.description || "",
         price: item.price,
         image: item.image || "",
-        categoryId: item.categoryId,
+        categoryId: typeof item.categoryId === 'object' ? item.categoryId._id : item.categoryId,
         options: item.options,
         order: item.order
       });
@@ -363,7 +375,18 @@ const MenuManagement = () => {
   };
 
   const getItemsByCategory = (categoryId: string) => {
-    return items.filter(item => item.categoryId === categoryId);
+    console.log('Filtering items for category:', categoryId);
+    const filteredItems = items.filter(item => {
+      // Handle both string and ObjectId comparisons
+      const itemCategoryId = typeof item.categoryId === 'object' && item.categoryId?._id
+        ? item.categoryId._id
+        : item.categoryId;
+      const match = itemCategoryId === categoryId || itemCategoryId?.toString() === categoryId;
+      console.log(`Item "${item.name}" categoryId: ${itemCategoryId} (${typeof itemCategoryId}) vs ${categoryId} = ${match}`);
+      return match;
+    });
+    console.log(`Found ${filteredItems.length} items for category ${categoryId}`);
+    return filteredItems;
   };
 
   const getOptionBadges = (options: MenuItem['options']) => {
@@ -528,7 +551,7 @@ const MenuManagement = () => {
                               )}
                               <div className="flex items-center gap-2 mt-2">
                                 <div className="flex items-center text-sm font-medium">
-                                  <IndianRupee className="h-3 w-3" />
+                                  <DollarSign className="h-3 w-3" />
                                   {item.price}
                                 </div>
                                 <div className="flex gap-1">
@@ -653,7 +676,7 @@ const MenuManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="item-price">Price (₹)</Label>
+                <Label htmlFor="item-price">Price ($)</Label>
                 <Input
                   id="item-price"
                   type="number"
