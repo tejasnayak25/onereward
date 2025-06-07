@@ -1167,7 +1167,7 @@ app.post('/api/admin/restaurant', async (req, res) => {
 app.put('/api/admin/restaurant/:id', async (req, res) => {
   const { name, image, featured, order } = req.body;
   try {
-    const updatedRestaurant = await RestaurantA.findByIdAndUpdate(req.params.id, { name, image, featured, order }, { new: true });
+    const updatedRestaurant = await Restaurant.findByIdAndUpdate(req.params.id, { name, image, featured, order }, { new: true });
     res.json(updatedRestaurant);
   } catch (err) {
     res.status(500).json({ error: 'Error updating restaurant' });
@@ -1177,7 +1177,7 @@ app.put('/api/admin/restaurant/:id', async (req, res) => {
 // Delete a Restaurant
 app.delete('/api/admin/restaurant/:id', async (req, res) => {
   try {
-    const restaurant = await RestaurantA.findByIdAndDelete(req.params.id);
+    const restaurant = await Restaurant.findByIdAndDelete(req.params.id);
     res.json({ message: 'Restaurant deleted', restaurant });
   } catch (err) {
     res.status(500).json({ error: 'Error deleting restaurant' });

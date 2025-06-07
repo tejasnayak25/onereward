@@ -66,7 +66,7 @@ const AllRestaurants = () => {
   };
 
   const getRestaurantImage = (restaurant: Restaurant, index: number) => {
-    return restaurant.cardImage || defaultImages[index % defaultImages.length];
+    return restaurant.logo || defaultImages[index % defaultImages.length];
   };
 
   if (loading) {
@@ -137,7 +137,7 @@ const AllRestaurants = () => {
                   />
 
                   {/* Restaurant Logo */}
-                  {restaurant.logo && (
+                  {/* {restaurant.logo && (
                     <div className="absolute top-2 right-2 w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full p-1 shadow-lg">
                       <img
                         src={restaurant.logo}
@@ -149,7 +149,7 @@ const AllRestaurants = () => {
                         }}
                       />
                     </div>
-                  )}
+                  )} */}
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
