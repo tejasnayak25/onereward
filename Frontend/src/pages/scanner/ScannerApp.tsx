@@ -476,6 +476,14 @@ const ScannerApp = () => {
                 <div className="flex-1">
                   <div className="font-semibold text-green-800">{customer.name}</div>
                   <div className="text-sm text-green-600">{customer.phone}</div>
+                  <div className="text-sm text-green-600">
+                    {(() => {
+                      const restaurantPoints = customer?.availablePoints?.find(
+                        point => point.restaurantName === user?.name
+                      );
+                      return restaurantPoints ? `${restaurantPoints.points} Available points` : "0 Available points";
+                    })()}
+                  </div>
                   <div className="text-xs text-green-500 mt-1">✓ Customer Found</div>
                 </div>
               </div>
