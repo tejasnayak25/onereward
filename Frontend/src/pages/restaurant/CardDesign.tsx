@@ -10,8 +10,11 @@ import axios from 'axios';
 const CardDesign = () => {
   const [cardImage, setCardImage] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [logo, setLogo] = useState<string | null>(null);
+  const [logoUrl, setLogoUrl] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [logoSaving, setLogoSaving] = useState(false);
   const [restaurantInfo, setRestaurantInfo] = useState<{id: string, name: string} | null>(null);
   const { toast } = useToast();
 
@@ -47,11 +50,15 @@ const CardDesign = () => {
 
     setIsLoading(true);
     try {
-      // Use restaurant ID for fetching card image
+      // Use restaurant ID for fetching card image and logo
       const response = await axios.get(`/api/restaurant/${restaurantInfo.id}/card-image`);
       const image = response.data.cardImage;
+      const logoData = response.data.logo;
+
       setCardImage(image);
       setImageUrl(image || '');
+      setLogo(logoData);
+      setLogoUrl(logoData || '');
     } catch (error) {
       console.error('Error fetching card image:', error);
       // Don't show error toast for missing image, it's normal
@@ -128,6 +135,66 @@ const CardDesign = () => {
     });
   };
 
+  const handleApplyLogo = () => {
+    if (logoUrl.trim()) {
+      setLogo(logoUrl.trim());
+      toast({
+        title: "Logo Applied",
+        description: "Restaurant logo updated",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Please enter a valid logo URL",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveLogo = async () => {
+    if (!restaurantInfo) {
+      toast({
+        title: "Error",
+        description: "Restaurant information not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setLogoSaving(true);
+    try {
+      console.log('Saving logo for restaurant:', restaurantInfo.name);
+      console.log('Logo URL:', logo);
+
+      const response = await axios.put(`/api/restaurant/${restaurantInfo.name}/logo`, { logo });
+      console.log('Logo save response:', response.data);
+
+      toast({
+        title: "Success",
+        description: `Restaurant logo saved successfully for ${restaurantInfo.name}!`,
+      });
+    } catch (error) {
+      console.error('Error saving logo:', error);
+      console.error('Error details:', error.response?.data);
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to save logo",
+        variant: "destructive",
+      });
+    } finally {
+      setLogoSaving(false);
+    }
+  };
+
+  const handleClearLogo = () => {
+    setLogo(null);
+    setLogoUrl('');
+    toast({
+      title: "Logo Removed",
+      description: "Restaurant logo cleared",
+    });
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
@@ -140,6 +207,82 @@ const CardDesign = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Upload */}
         <div className="space-y-6">
+          {/* Logo Management */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Restaurant Logo
+              </CardTitle>
+              <CardDescription>
+                Upload your restaurant logo to display on customer app
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                {/* Logo URL Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="logoUrl">Logo URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="logoUrl"
+                      type="url"
+                      placeholder="Paste logo URL here..."
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={handleApplyLogo}
+                      disabled={!logoUrl.trim()}
+                    >
+                      <Link className="h-4 w-4 mr-2" />
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Logo Preview */}
+                {logo && (
+                  <div className="space-y-4">
+                    <div className="border rounded-lg overflow-hidden p-4 bg-gray-50 flex justify-center">
+                      <img
+                        src={logo}
+                        alt="Restaurant logo preview"
+                        className="w-24 h-24 object-contain"
+                        onError={() => {
+                          toast({
+                            title: "Invalid Logo",
+                            description: "The logo URL is not valid or accessible",
+                            variant: "destructive",
+                          });
+                        }}
+                      />
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={handleClearLogo}
+                      className="w-full"
+                    >
+                      Remove Logo
+                    </Button>
+                  </div>
+                )}
+
+                {/* Save Logo Button */}
+                <Button
+                  onClick={handleSaveLogo}
+                  disabled={logoSaving || !logo}
+                  className="w-full"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {logoSaving ? 'Saving...' : 'Save Logo'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

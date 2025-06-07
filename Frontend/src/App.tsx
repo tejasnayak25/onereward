@@ -21,6 +21,7 @@ import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import RestaurantCustomers from "./pages/restaurant/Customers";
 import RestaurantPoints from "./pages/restaurant/Points";
 import RestaurantCardDesign from "./pages/restaurant/CardDesign";
+import MenuManagement from "./pages/restaurant/MenuManagement";
 
 // Scanner app pages
 import ScannerApp from "./pages/scanner/ScannerApp";
@@ -30,6 +31,8 @@ import CustomerHome from "./pages/customer/Home";
 import CustomerCards from "./pages/customer/Cards";
 import CustomerCardDetail from "./pages/customer/CardDetail";
 import AccountSettings from "./pages/customer/AccountSettings";
+import AllRestaurants from "./pages/customer/AllRestaurants";
+import RestaurantMenu from "./pages/customer/RestaurantMenu";
 
 // Auth pages
 import Login from "./pages/auth/Login";
@@ -74,6 +77,7 @@ const App = () => (
             <Route path="customers" element={<RestaurantCustomers />} />
             <Route path="points" element={<RestaurantPoints />} />
             <Route path="card-design" element={<RestaurantCardDesign />} />
+            <Route path="menu" element={<MenuManagement />} />
           </Route>
           
           {/* Scanner App */}
@@ -87,6 +91,8 @@ const App = () => (
             <Route path="home" element={<CustomerHome />} />
             <Route path="cards" element={<CustomerCards />} />
             <Route path="cards/:id" element={<CustomerCardDetail />} />
+            <Route path="restaurants" element={<AllRestaurants />} />
+            <Route path="restaurant/:restaurantId/menu" element={<RestaurantMenu />} />
             <Route path="account-settings" element={<AccountSettings />} />
           </Route>
           

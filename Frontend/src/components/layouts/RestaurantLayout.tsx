@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   LogOut,
+  ChefHat,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +67,7 @@ const RestaurantLayout = () => {
     { path: "/restaurant/dashboard", icon: BarChart3, label: "Dashboard" },
     { path: "/restaurant/customers", icon: Users, label: "Customers" },
     { path: "/restaurant/points", icon: CreditCard, label: "Points Management" },
+    { path: "/restaurant/menu", icon: ChefHat, label: "Menu Management" },
     { path: "/restaurant/card-design", icon: Palette, label: "Card Design" },
   ];
 

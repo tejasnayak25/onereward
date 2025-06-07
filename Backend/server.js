@@ -58,6 +58,10 @@ const restaurantSchema = new mongoose.Schema(
       type: String,
       default: null, // URL to the custom card background image
     },
+    logo: {
+      type: String,
+      default: null, // URL to the restaurant logo
+    },
   },
   { timestamps: true }
 );
@@ -1103,6 +1107,38 @@ const restaurantSchemaA = new mongoose.Schema({
 
 const RestaurantA = mongoose.model('FeaturedRestaurant', restaurantSchemaA);
 
+// Menu Category Schema
+const menuCategorySchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  restaurantName: { type: String, required: true },
+  order: { type: Number, default: 0 },
+  active: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const MenuCategory = mongoose.model('MenuCategory', menuCategorySchema);
+
+// Menu Item Schema
+const menuItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  price: { type: Number, required: true },
+  image: { type: String }, // Image URL
+  categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuCategory', required: true },
+  restaurantName: { type: String, required: true },
+  options: {
+    isVeg: { type: Boolean, default: false },
+    isNonVeg: { type: Boolean, default: false },
+    isJain: { type: Boolean, default: false },
+    isSwaminarayan: { type: Boolean, default: false },
+    isSpicy: { type: Boolean, default: false }
+  },
+  available: { type: Boolean, default: true },
+  order: { type: Number, default: 0 }
+}, { timestamps: true });
+
+const MenuItem = mongoose.model('MenuItem', menuItemSchema);
+
 
 
 // Get Featured Restaurants
@@ -1145,6 +1181,254 @@ app.delete('/api/admin/restaurant/:id', async (req, res) => {
     res.json({ message: 'Restaurant deleted', restaurant });
   } catch (err) {
     res.status(500).json({ error: 'Error deleting restaurant' });
+  }
+});
+
+// Update restaurant logo
+app.put('/api/restaurant/:restaurantName/logo', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { logo } = req.body;
+
+    console.log('Updating logo for restaurant:', restaurantName);
+    console.log('Logo URL:', logo);
+
+    const updatedRestaurant = await Restaurant.findOneAndUpdate(
+      { name: restaurantName },
+      { logo },
+      { new: true }
+    );
+
+    if (!updatedRestaurant) {
+      return res.status(404).json({ error: 'Restaurant not found' });
+    }
+
+    console.log('Logo updated successfully');
+    res.json({ success: true, restaurant: updatedRestaurant });
+  } catch (err) {
+    console.error('Error updating restaurant logo:', err);
+    res.status(500).json({ error: 'Error updating restaurant logo', details: err.message });
+  }
+});
+
+// ==================== MENU MANAGEMENT APIs ====================
+
+// Get all menu categories for a restaurant
+app.get('/api/restaurant/:restaurantName/menu/categories', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    console.log('Fetching categories for restaurant:', restaurantName);
+    const categories = await MenuCategory.find({ restaurantName }).sort({ order: 1 });
+    res.json(categories);
+  } catch (err) {
+    console.error('Error fetching menu categories:', err);
+    res.status(500).json({ error: 'Error fetching menu categories' });
+  }
+});
+
+// Create a new menu category
+app.post('/api/restaurant/:restaurantName/menu/categories', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { name, description, order } = req.body;
+
+    console.log('Creating category for restaurant:', restaurantName);
+    console.log('Category data:', { name, description, order });
+
+    if (!name) {
+      return res.status(400).json({ error: 'Category name is required' });
+    }
+
+    const newCategory = new MenuCategory({
+      name,
+      description,
+      restaurantName,
+      order: order || 0
+    });
+
+    await newCategory.save();
+    console.log('Category created successfully:', newCategory);
+    res.status(201).json(newCategory);
+  } catch (err) {
+    console.error('Error creating menu category:', err);
+    res.status(500).json({ error: 'Error creating menu category', details: err.message });
+  }
+});
+
+// Update a menu category
+app.put('/api/restaurant/:restaurantName/menu/categories/:id', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { id } = req.params;
+    const { name, description, order, active } = req.body;
+
+    console.log('Updating category for restaurant:', restaurantName);
+
+    const updatedCategory = await MenuCategory.findByIdAndUpdate(
+      id,
+      { name, description, order, active },
+      { new: true }
+    );
+
+    res.json(updatedCategory);
+  } catch (err) {
+    console.error('Error updating menu category:', err);
+    res.status(500).json({ error: 'Error updating menu category' });
+  }
+});
+
+// Delete a menu category
+app.delete('/api/restaurant/:restaurantName/menu/categories/:id', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { id } = req.params;
+
+    console.log('Deleting category for restaurant:', restaurantName);
+
+    // Also delete all menu items in this category
+    await MenuItem.deleteMany({ categoryId: id });
+    await MenuCategory.findByIdAndDelete(id);
+
+    res.json({ message: 'Category and associated items deleted' });
+  } catch (err) {
+    console.error('Error deleting menu category:', err);
+    res.status(500).json({ error: 'Error deleting menu category' });
+  }
+});
+
+// Get all menu items for a restaurant
+app.get('/api/restaurant/:restaurantName/menu/items', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { categoryId } = req.query;
+
+    console.log('Fetching menu items for restaurant:', restaurantName);
+
+    let query = { restaurantName };
+    if (categoryId) {
+      query.categoryId = categoryId;
+    }
+
+    const items = await MenuItem.find(query)
+      .populate('categoryId', 'name')
+      .sort({ order: 1 });
+    res.json(items);
+  } catch (err) {
+    console.error('Error fetching menu items:', err);
+    res.status(500).json({ error: 'Error fetching menu items' });
+  }
+});
+
+// Create a new menu item
+app.post('/api/restaurant/:restaurantName/menu/items', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { name, description, price, image, categoryId, options, order } = req.body;
+
+    console.log('Creating menu item for restaurant:', restaurantName);
+    console.log('Item data:', { name, description, price, image, categoryId, options, order });
+
+    if (!name) {
+      return res.status(400).json({ error: 'Item name is required' });
+    }
+
+    if (!price || price <= 0) {
+      return res.status(400).json({ error: 'Valid price is required' });
+    }
+
+    if (!categoryId) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+
+    const newItem = new MenuItem({
+      name,
+      description,
+      price,
+      image,
+      categoryId,
+      restaurantName,
+      options: options || {},
+      order: order || 0
+    });
+
+    await newItem.save();
+    const populatedItem = await MenuItem.findById(newItem._id).populate('categoryId', 'name');
+    console.log('Menu item created successfully:', populatedItem);
+    res.status(201).json(populatedItem);
+  } catch (err) {
+    console.error('Error creating menu item:', err);
+    res.status(500).json({ error: 'Error creating menu item', details: err.message });
+  }
+});
+
+// Update a menu item
+app.put('/api/restaurant/:restaurantName/menu/items/:id', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { id } = req.params;
+    const { name, description, price, image, categoryId, options, available, order } = req.body;
+
+    console.log('Updating menu item for restaurant:', restaurantName);
+
+    const updatedItem = await MenuItem.findByIdAndUpdate(
+      id,
+      { name, description, price, image, categoryId, options, available, order },
+      { new: true }
+    ).populate('categoryId', 'name');
+
+    res.json(updatedItem);
+  } catch (err) {
+    console.error('Error updating menu item:', err);
+    res.status(500).json({ error: 'Error updating menu item' });
+  }
+});
+
+// Delete a menu item
+app.delete('/api/restaurant/:restaurantName/menu/items/:id', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+    const { id } = req.params;
+
+    console.log('Deleting menu item for restaurant:', restaurantName);
+
+    await MenuItem.findByIdAndDelete(id);
+    res.json({ message: 'Menu item deleted' });
+  } catch (err) {
+    console.error('Error deleting menu item:', err);
+    res.status(500).json({ error: 'Error deleting menu item' });
+  }
+});
+
+// Get complete menu for customer view (categories with items)
+app.get('/api/customer/restaurant/:restaurantName/menu', async (req, res) => {
+  try {
+    const restaurantName = decodeURIComponent(req.params.restaurantName);
+
+    console.log('Fetching customer menu for restaurant:', restaurantName);
+
+    // Get all active categories for this restaurant
+    const categories = await MenuCategory.find({
+      restaurantName,
+      active: true
+    }).sort({ order: 1 });
+
+    // Get all available menu items for this restaurant
+    const items = await MenuItem.find({
+      restaurantName,
+      available: true
+    }).sort({ order: 1 });
+
+    // Group items by category
+    const menuWithItems = categories.map(category => ({
+      ...category.toObject(),
+      items: items.filter(item => item.categoryId.toString() === category._id.toString())
+    }));
+
+    console.log('Menu fetched successfully:', menuWithItems.length, 'categories');
+    res.json(menuWithItems);
+  } catch (err) {
+    console.error('Error fetching restaurant menu:', err);
+    res.status(500).json({ error: 'Error fetching restaurant menu' });
   }
 });
 
@@ -1649,7 +1933,14 @@ app.put('/api/restaurant/by-name/:name/card-image', async (req, res) => {
 
 
 
+console.log('🚀 Starting server...');
+console.log('📦 Express app created');
+console.log('🔧 Middleware configured');
+console.log('📊 Routes registered');
+
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running on port ${port} and accessible on your local network.`);
-  console.log(`e.g., http://localhost:${port} or http://<YOUR_MACHINE_IP>:${port}`);
+  console.log(`🎉 Server is running on port ${port} and accessible on your local network.`);
+  console.log(`🌐 Local: http://localhost:${port}`);
+  console.log(`🌐 Network: http://<YOUR_MACHINE_IP>:${port}`);
+  console.log('✅ Server startup complete!');
 });

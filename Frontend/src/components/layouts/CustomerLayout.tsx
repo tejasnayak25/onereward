@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import { Home, CreditCard, Wifi, LogOut, QrCode } from "lucide-react";
+import { Home, CreditCard, Wifi, LogOut, QrCode, Store } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -146,7 +146,7 @@ const CustomerLayout = () => {
       </main>
 
       {/* Bottom Navigation - Fixed */}
-      <nav className="h-16 grid grid-cols-2 border-t border-border bg-white/95 backdrop-blur-sm fixed bottom-0 left-0 right-0 z-50 shadow-lg">
+      <nav className="h-16 grid grid-cols-3 border-t border-border bg-white/95 backdrop-blur-sm fixed bottom-0 left-0 right-0 z-50 shadow-lg">
         <Link
           to="/customer/home"
           className={`flex flex-col items-center justify-center transition-colors ${
@@ -168,6 +168,17 @@ const CustomerLayout = () => {
         >
           <CreditCard className="h-5 w-5" />
           <span className="text-xs mt-1">My Cards</span>
+        </Link>
+        <Link
+          to="/customer/restaurants"
+          className={`flex flex-col items-center justify-center transition-colors ${
+            isActive("/customer/restaurants") || location.pathname.startsWith("/customer/restaurant/")
+              ? "text-primary"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Store className="h-5 w-5" />
+          <span className="text-xs mt-1">All Restaurants</span>
         </Link>
       </nav>
 
