@@ -20,6 +20,17 @@
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#000000" />
     <link rel="apple-touch-icon" href="/icons/logo.jpg" />
+
+    <script type="text/javascript" src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "cca963eb-fe6b-4182-a923-7f9070d46c27"
+        });
+        console.log("Ready")
+      });
+    </script>
   </head>
 
   <body>

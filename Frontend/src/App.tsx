@@ -21,6 +21,7 @@ import RestaurantDashboard from "./pages/restaurant/Dashboard";
 import RestaurantCustomers from "./pages/restaurant/Customers";
 import RestaurantPoints from "./pages/restaurant/Points";
 import RestaurantCardDesign from "./pages/restaurant/CardDesign";
+import Notifications from "./pages/restaurant/Notifications";
 import MenuManagement from "./pages/restaurant/MenuManagement";
 
 // Scanner app pages
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="points" element={<RestaurantPoints />} />
             <Route path="card-design" element={<RestaurantCardDesign />} />
             <Route path="menu" element={<MenuManagement />} />
+            <Route path="notifications" element={<Notifications />} />
           </Route>
           
           {/* Scanner App */}

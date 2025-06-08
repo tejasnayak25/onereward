@@ -9,6 +9,7 @@ import {
   X,
   LogOut,
   ChefHat,
+  Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,6 +70,7 @@ const RestaurantLayout = () => {
     { path: "/restaurant/points", icon: CreditCard, label: "Points Management" },
     { path: "/restaurant/menu", icon: ChefHat, label: "Menu Management" },
     { path: "/restaurant/card-design", icon: Palette, label: "Card Design" },
+    { path: "/restaurant/notifications", icon: Bell, label: "Notifications" },
   ];
 
   const handleLogout = () => {
