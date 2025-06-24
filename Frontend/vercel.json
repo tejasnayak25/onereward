@@ -3,5 +3,18 @@
   "builds": [
     { "src": "package.json", "use": "@vercel/static-build" }
   ],
+  "routes": [
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/icons/(.*)", "dest": "/icons/$1" },
+    { "src": "/favicon.ico", "dest": "/favicon.ico" },
+    { "src": "/manifest.json", "dest": "/manifest.json" },
+    { "src": "/robots.txt", "dest": "/robots.txt" },
+    { "src": "/OneSignalSDKWorker.js", "dest": "/OneSignalSDKWorker.js" },
+    { "src": "/Logo.jpg", "dest": "/Logo.jpg" },
+    { "src": "/placeholder.svg", "dest": "/placeholder.svg" },
+    { "src": "/service-worker.js", "dest": "/service-worker.js" },
+    { "src": "/offline.html", "dest": "/offline.html" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
   "outputDirectory": "dist"
 }
