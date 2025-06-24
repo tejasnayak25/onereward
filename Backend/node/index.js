@@ -412,7 +412,7 @@ app.post("/api/notifications", async (req, res) => {
     await fetch("https://api.onesignal.com/notifications?c=push", {
       method: "POST", 
       headers: {
-        "Authorization": `Key REPLACE_WITH_ONESIGNAL_APIKEY`,
+        "Authorization": `Key ${process.env.ONESIGNAL_API_KEY}`,
         "accept": "application/json",
         "content-type": "application/json"
       },
