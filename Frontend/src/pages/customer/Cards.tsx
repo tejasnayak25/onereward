@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Store, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PersonalizedCard from "@/components/PersonalizedCard";
+import { API_BASE_URL } from "@/config/api";
 
 // Predefined image pool
 const IMAGE_POOL = [
@@ -46,7 +47,7 @@ const CustomerCards = () => {
   // Fetch restaurant data
   const fetchRestaurants = async () => {
     try {
-      const { data } = await axios.get("/api/restaurants");
+      const { data } = await axios.get(`${API_BASE_URL}/api/restaurants`);
       const withImages = data.map((r: Restaurant) => ({
         ...r,
         image: IMAGE_POOL[Math.floor(Math.random() * IMAGE_POOL.length)], // Random image from pool
@@ -63,7 +64,7 @@ const CustomerCards = () => {
   // Fetch user points from the API
   const fetchUserPoints = async () => {
     try {
-      const { data } = await axios.get(`/api/user/${userId}/points`);
+      const { data } = await axios.get(`${API_BASE_URL}/api/user/${userId}/points`);
       setUserPoints(data);
     } catch (error) {
       console.error("Failed to fetch user points:", error);

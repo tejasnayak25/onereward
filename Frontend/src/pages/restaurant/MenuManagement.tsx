@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 interface MenuCategory {
   _id: string;
@@ -109,8 +110,8 @@ const MenuManagement = () => {
       console.log('Fetching menu data for restaurant:', name, 'encoded as:', encodedName);
 
       const [categoriesRes, itemsRes] = await Promise.all([
-        axios.get(`/api/restaurant/${encodedName}/menu/categories`),
-        axios.get(`/api/restaurant/${encodedName}/menu/items`)
+        axios.get(`${API_BASE_URL}/api/restaurant/${encodedName}/menu/categories`),
+        axios.get(`${API_BASE_URL}/api/restaurant/${encodedName}/menu/items`)
       ]);
 
       console.log('Categories fetched:', categoriesRes.data);
@@ -153,7 +154,7 @@ const MenuManagement = () => {
         return;
       }
 
-      const response = await axios.post(`/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories`, categoryForm);
+      const response = await axios.post(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories`, categoryForm);
       console.log('Category created:', response.data);
 
       setCategories([...categories, response.data]);
@@ -180,7 +181,7 @@ const MenuManagement = () => {
     
     try {
       const response = await axios.put(
-        `/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories/${editingCategory._id}`,
+        `${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories/${editingCategory._id}`,
         categoryForm
       );
       setCategories(categories.map(cat => 
@@ -206,7 +207,7 @@ const MenuManagement = () => {
     if (!confirm("Are you sure? This will delete all items in this category.")) return;
     
     try {
-      await axios.delete(`/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories/${categoryId}`);
+      await axios.delete(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/categories/${categoryId}`);
       setCategories(categories.filter(cat => cat._id !== categoryId));
       setItems(items.filter(item => item.categoryId !== categoryId));
       toast({
@@ -254,7 +255,7 @@ const MenuManagement = () => {
         return;
       }
 
-      const response = await axios.post(`/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items`, itemForm);
+      const response = await axios.post(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items`, itemForm);
       console.log('Menu item created:', response.data);
 
       setItems([...items, response.data]);
@@ -281,7 +282,7 @@ const MenuManagement = () => {
     
     try {
       const response = await axios.put(
-        `/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items/${editingItem._id}`,
+        `${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items/${editingItem._id}`,
         itemForm
       );
       setItems(items.map(item => 
@@ -307,7 +308,7 @@ const MenuManagement = () => {
     if (!confirm("Are you sure you want to delete this menu item?")) return;
     
     try {
-      await axios.delete(`/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items/${itemId}`);
+      await axios.delete(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/menu/items/${itemId}`);
       setItems(items.filter(item => item._id !== itemId));
       toast({
         title: "Success",

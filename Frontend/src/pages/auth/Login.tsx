@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ const Login = () => {
       }
   
       if (userType === "restaurant") {
-        const { data } = await axios.get("/api/restaurants");
+        const { data } = await axios.get(`${API_BASE_URL}/api/restaurants`);
   
         const found = data.find(
           (rest: any) =>
@@ -71,7 +72,7 @@ const Login = () => {
   
       if (userType === "scanner") {
         // Check restaurant for scanner login
-        const { data } = await axios.get("/api/restaurants");
+        const { data } = await axios.get(`${API_BASE_URL}/api/restaurants`);
   
         const foundScanner = data.find(
           (rest: any) => rest.email === email && rest.password === password
@@ -90,7 +91,7 @@ const Login = () => {
       }
   
       // Unified login for customer
-      const response = await axios.post("/api/auth/login", {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email,
         password,
         userType,

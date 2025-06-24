@@ -43,6 +43,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/config/api";
 
 const AdminRestaurants = () => {
   const { toast } = useToast();
@@ -65,7 +66,7 @@ const AdminRestaurants = () => {
   const fetchRestaurants = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("/api/restaurants");
+      const response = await axios.get(`${API_BASE_URL}/api/restaurants`);
       setRestaurants(response.data);
     } catch (error) {
       toast({
@@ -144,7 +145,7 @@ const AdminRestaurants = () => {
 
     try {
       if (isCreating) {
-        await axios.post("/api/restaurants/create", {
+        await axios.post(`${API_BASE_URL}/api/restaurants/create`, {
           name: formData.name,
           email: formData.email,
           status: formData.status ? "active" : "inactive",
@@ -157,7 +158,7 @@ const AdminRestaurants = () => {
         });
       } else {
         const response = await axios.put(
-          `/api/restaurants/update/${currentRestaurant._id}`,
+          `${API_BASE_URL}/api/restaurants/update/${currentRestaurant._id}`,
           {
             name: formData.name,
             email: formData.email,
@@ -189,7 +190,7 @@ const AdminRestaurants = () => {
   const handleDeleteRestaurant = async (id: string) => {
     try {
       const response = await axios.delete(
-        `/api/restaurants/delete/${id}`
+        `${API_BASE_URL}/api/restaurants/delete/${id}`
       );
 
       if (response.status === 200) {

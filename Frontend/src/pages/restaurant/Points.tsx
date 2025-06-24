@@ -30,6 +30,7 @@ import {
   Gift,
   Calendar,
 } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 interface Offer {
   _id: number;
@@ -63,7 +64,7 @@ const RestaurantPoints = () => {
 
     // Fetch all offers and filter on client side (temporary fix for backend filtering issue)
     axios
-      .get("/api/offers")
+      .get(`${API_BASE_URL}/api/offers`)
       .then((response) => {
         // Filter offers to show only this restaurant's offers
         const filteredOffers = response.data.filter(
@@ -116,7 +117,7 @@ const RestaurantPoints = () => {
 
     if (currentOffer) {
       axios
-        .put(`/api/offers/${currentOffer._id}`, offerData)
+        .put(`${API_BASE_URL}/api/offers/${currentOffer._id}`, offerData)
         .then((response) => {
           const updatedOffers = offers.map((offer) =>
             offer._id === currentOffer._id ? response.data : offer
@@ -137,7 +138,7 @@ const RestaurantPoints = () => {
         });
     } else {
       axios
-        .post("/api/offers", offerData)
+        .post(`${API_BASE_URL}/api/offers`, offerData)
         .then((response) => {
           setOffers([...offers, response.data]);
           toast({
@@ -218,7 +219,7 @@ const RestaurantPoints = () => {
     }
 
     axios
-      .delete(`/api/offers/${_id}`)
+      .delete(`${API_BASE_URL}/api/offers/${_id}`)
       .then(() => {
         setOffers(offers.filter((offer) => offer._id !== _id));
         toast({

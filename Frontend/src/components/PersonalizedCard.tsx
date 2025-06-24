@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from "@/config/api";
 
 interface PersonalizedCardProps {
   restaurantName: string;
@@ -32,7 +33,7 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
 
       // Try to fetch card image
       try {
-        const cardImageRes = await axios.get(`/api/restaurant/by-name/${encodeURIComponent(restaurantName)}/card-image`);
+        const cardImageRes = await axios.get(`${API_BASE_URL}/api/restaurant/by-name/${encodeURIComponent(restaurantName)}/card-image`);
         setCardImage(cardImageRes.data.cardImage);
         console.log('✅ Card image fetched successfully:', cardImageRes.data.cardImage);
       } catch (error) {
@@ -43,7 +44,7 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
       // Try to fetch QR code and phone from Users table
       if (user.email) {
         try {
-          const qrCodeRes = await axios.get(`/api/user-qr/${user.email}`);
+          const qrCodeRes = await axios.get(`${API_BASE_URL}/api/user-qr/${user.email}`);
           if (qrCodeRes.data && qrCodeRes.data.success) {
             // Set QR code
             if (qrCodeRes.data.qrCode) {
@@ -62,7 +63,7 @@ const PersonalizedCard: React.FC<PersonalizedCardProps> = ({
       // Try to fetch actual points (no default fallback)
       if (user.name) {
         try {
-          const userPointsRes = await axios.get(`/api/user/${user.name}/points`);
+          const userPointsRes = await axios.get(`${API_BASE_URL}/api/user/${user.name}/points`);
           // Only set points if we actually get data, otherwise keep 0
           if (userPointsRes.data && userPointsRes.data[restaurantName] !== undefined) {
             setUserPoints(userPointsRes.data[restaurantName]);

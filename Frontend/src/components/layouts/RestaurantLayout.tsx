@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 const RestaurantLayout = () => {
   const { toast } = useToast();
@@ -51,7 +52,7 @@ const RestaurantLayout = () => {
 
   const fetchBackgroundImage = async (restaurantId: string) => {
     try {
-      const response = await axios.get(`/api/restaurant/${restaurantId}/card-image`);
+      const response = await axios.get(`${API_BASE_URL}/api/restaurant/${restaurantId}/card-image`);
       if (response.data.cardImage) {
         setBackgroundImage(response.data.cardImage);
       }

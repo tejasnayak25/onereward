@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Leaf, Flame, Star, DollarSign } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 interface MenuCategory {
   _id: string;
@@ -53,11 +54,11 @@ const RestaurantMenu = () => {
       setLoading(true);
       
       // Fetch restaurant details
-      const restaurantResponse = await axios.get(`/api/restaurants/${restaurantId}`);
+      const restaurantResponse = await axios.get(`${API_BASE_URL}/api/restaurants/${restaurantId}`);
       setRestaurant(restaurantResponse.data);
       
       // Fetch menu
-      const menuResponse = await axios.get(`/api/customer/restaurant/${encodeURIComponent(restaurantResponse.data.name)}/menu`);
+      const menuResponse = await axios.get(`${API_BASE_URL}/api/customer/restaurant/${encodeURIComponent(restaurantResponse.data.name)}/menu`);
       setMenu(menuResponse.data);
       
       // Set first category as active

@@ -9,9 +9,10 @@ import { GripVertical, Plus, Trash2, Upload, Image, Save, AlertCircle } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { API_BASE_URL } from "@/config/api";
 
 // Sample API URL (adjust as necessary)
-const API_URL = "/api"; // Replace with your actual API base URL
+const API_URL = `${API_BASE_URL}/api`; // Replace with your actual API base URL
 
 const AdminSliders = () => {
   const [topSliders, setTopSliders] = useState([]);

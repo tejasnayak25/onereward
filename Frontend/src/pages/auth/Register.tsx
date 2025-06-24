@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import axios from "axios"; // Import axios for making API requests
+import { API_BASE_URL } from "@/config/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const Register = () => {
 
     try {
       // Send data to the backend API
-      const response = await axios.post("/api/auth/register", formData);
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, formData);
 
       // If registration is successful, show success message
       toast({

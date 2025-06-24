@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, Store } from "lucide-react";
+import { API_BASE_URL } from "@/config/api";
 
 // Sample API URL (adjust as necessary)
 const API_URL = "/api"; // Replace with your actual API base URL
@@ -23,9 +24,9 @@ const CustomerHome = () => {
   const fetchData = async () => {
     try {
       const [topSlidersResponse, bottomSlidersResponse, featuredRestaurantsResponse] = await Promise.all([
-        axios.get(`${API_URL}/top-sliders`),
-        axios.get(`${API_URL}/bottom-sliders`),
-        axios.get(`${API_URL}/featured-restaurants`),
+        axios.get(`${API_BASE_URL}/api/top-sliders`),
+        axios.get(`${API_BASE_URL}/api/bottom-sliders`),
+        axios.get(`${API_BASE_URL}/api/featured-restaurants`),
       ]);
       
       setTopSliders(topSlidersResponse.data);

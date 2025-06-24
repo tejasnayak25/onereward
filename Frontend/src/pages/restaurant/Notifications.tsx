@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, MoreVertical, Eye, Gift, Plus } from "lucide-react"; // Ensure correct import of Plus icon
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { API_BASE_URL } from "@/config/api";
 
 const Notifications = () => {
   const { toast } = useToast();
@@ -59,7 +60,7 @@ const Notifications = () => {
             createdBy: email
         });
 
-        fetch(`/api/notifications?createdby=${encodeURIComponent(email)}`)
+        fetch(`${API_BASE_URL}/api/notifications?createdby=${encodeURIComponent(email)}`)
       .then((response) => response.json())
         .then((res) => {
             if(res) {
@@ -98,7 +99,7 @@ const Notifications = () => {
 
     // Add customer data to the backend
     axios
-      .post("/api/notifications", formData)
+      .post(`${API_BASE_URL}/api/notifications`, formData)
       .then((response) => {
         setNotifications([...notifications, response.data.notification]);
         setDialogOpen(false);

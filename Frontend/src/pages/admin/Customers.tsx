@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Search } from "lucide-react";
 import axios from "axios"; // Import axios to make API calls
 import { useToast } from "@/hooks/use-toast";
+import { API_BASE_URL } from "@/config/api";
 
 const AdminCustomers = () => {
   const { toast } = useToast();
@@ -19,7 +20,7 @@ const AdminCustomers = () => {
         setLoading(true);
 
         // Fetch customer data from the Node.js backend
-        const { data } = await axios.get("/api/customers");
+        const { data } = await axios.get(`${API_BASE_URL}/api/customers`);
 
         if (!data || data.length === 0) {
           setCustomers([]);

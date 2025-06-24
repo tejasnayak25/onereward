@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Users, Search, Download, Phone, Mail, Calendar, Gift, Activity, RefreshCw } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 interface Customer {
   _id: string;
@@ -102,7 +103,7 @@ const RestaurantCustomers = () => {
 
       console.log("👥 Fetching customers for:", restaurantName);
 
-      const response = await axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/all-customers`);
+      const response = await axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/all-customers`);
 
       console.log("✅ Customers data:", response.data);
 

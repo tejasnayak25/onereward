@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Eye, Image as ImageIcon, Link } from "lucide-react";
 import axios from 'axios';
+import { API_BASE_URL } from "@/config/api";
 
 const CardDesign = () => {
   const [cardImage, setCardImage] = useState<string | null>(null);
@@ -51,7 +52,7 @@ const CardDesign = () => {
     setIsLoading(true);
     try {
       // Use restaurant ID for fetching card image and logo
-      const response = await axios.get(`/api/restaurant/${restaurantInfo.id}/card-image`);
+      const response = await axios.get(`${API_BASE_URL}/api/restaurant/${restaurantInfo.id}/card-image`);
       const image = response.data.cardImage;
       const logoData = response.data.logo;
 
@@ -90,7 +91,7 @@ const CardDesign = () => {
       console.log('Card image URL:', cardImage);
 
       // Use restaurant ID for updating card image
-      const response = await axios.put(`/api/restaurant/${restaurantInfo.id}/card-image`, { cardImage });
+      const response = await axios.put(`${API_BASE_URL}/api/restaurant/${restaurantInfo.id}/card-image`, { cardImage });
       console.log('Save response:', response.data);
 
       toast({
@@ -166,7 +167,7 @@ const CardDesign = () => {
       console.log('Saving logo for restaurant:', restaurantInfo.name);
       console.log('Logo URL:', logo);
 
-      const response = await axios.put(`/api/restaurant/${restaurantInfo.name}/logo`, { logo });
+      const response = await axios.put(`${API_BASE_URL}/api/restaurant/${restaurantInfo.name}/logo`, { logo });
       console.log('Logo save response:', response.data);
 
       toast({

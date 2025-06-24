@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 const CustomerLayout = () => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const CustomerLayout = () => {
 
         // Fetch QR Code
         axios
-          .get(`/api/user-qr/${parsed.email}`)
+          .get(`${API_BASE_URL}/api/user-qr/${parsed.email}`)
           .then((res) => {
             if (res.data.success) {
               setQrCode(res.data.qrCode);

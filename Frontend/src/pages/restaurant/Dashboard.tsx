@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Activity, Target, Award, Clock, RefreshCw } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 interface DashboardStats {
   totalUsers: number;
@@ -121,8 +121,8 @@ const RestaurantDashboard = () => {
 
       // Fetch stats and redemptions
       const [statsResponse, redemptionsResponse] = await Promise.all([
-        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/stats`),
-        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/redemptions`)
+        axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/stats`),
+        axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/redemptions`)
       ]);
 
       console.log("✅ Stats data:", statsResponse.data);
@@ -151,7 +151,7 @@ const RestaurantDashboard = () => {
 
       console.log("📥 Downloading Excel data for:", restaurantName);
 
-      const response = await axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/download-excel`);
+      const response = await axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/download-excel`);
 
       // Convert to CSV format for easy Excel import
       const data = response.data.data;

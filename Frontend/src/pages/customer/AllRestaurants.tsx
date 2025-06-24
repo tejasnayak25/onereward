@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Store, MapPin } from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config/api";
 
 interface Restaurant {
   _id: string;
@@ -49,7 +50,7 @@ const AllRestaurants = () => {
   const fetchRestaurants = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("/api/restaurants");
+      const response = await axios.get(`${API_BASE_URL}/api/restaurants`);
       
       // Filter only active restaurants
       const activeRestaurants = response.data.filter(
