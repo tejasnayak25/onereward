@@ -12,6 +12,13 @@ const fetch = require("node-fetch");
 
 app.use(express.json());
 app.use(cors());
+
+// Call connectToDatabase() at the start of every handler (example below)
+app.use(async (req, res, next) => {
+  await connectToDatabase();
+  next();
+});
+
 app.use('/api/auth', authRoute);
 app.use("/api/redeem", redemptionRoutes);
 
@@ -32,12 +39,6 @@ async function connectToDatabase() {
   cached.conn = await cached.promise;
   return cached.conn;
 }
-
-// Call connectToDatabase() at the start of every handler (example below)
-app.use(async (req, res, next) => {
-  await connectToDatabase();
-  next();
-});
 
 
 const restaurantSchema = new mongoose.Schema(
