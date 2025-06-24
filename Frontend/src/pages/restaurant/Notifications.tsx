@@ -26,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { User, MoreVertical, Eye, Gift, Plus } from "lucide-react"; // Ensure correct import of Plus icon
+import { User, MoreVertical, Eye, Bell, Plus } from "lucide-react"; // Ensure correct import of Plus icon
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { API_BASE_URL } from "@/config/api";
@@ -272,39 +272,24 @@ const Notifications = () => {
         <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Customer Details</DialogTitle>
+              <DialogTitle>Notification Details</DialogTitle>
               <DialogDescription>
-                Detailed information about {selectedNotification.name}
+                Information about {selectedNotification.title}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                  <Gift className="h-8 w-8" />
+                  <Bell className="h-8 w-8" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold">{selectedNotification.name}</h3>
-                  <p className="text-muted-foreground">{selectedNotification.email}</p>
+                  <h3 className="text-xl font-semibold">{selectedNotification.title}</h3>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Phone</div>
-                  <div className="font-medium mt-1">{selectedNotification.phone}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Join Date</div>
-                  <div className="font-medium mt-1">{selectedNotification.joinDate}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Total Points</div>
-                  <div className="font-medium mt-1">{selectedNotification.totalPoints}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="font-medium mt-1 capitalize">{selectedNotification.status}</div>
-                </div>
+              <div className="rounded-lg border p-3">
+                <div className="text-sm text-muted-foreground">Body</div>
+                <div className="font-medium mt-1">{selectedNotification.body}</div>
               </div>
             </div>
             <DialogFooter>
