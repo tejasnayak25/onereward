@@ -22,7 +22,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Call Flask to generate QR with user email
-    const flaskResponse = await axios.post('http://127.0.0.1:5001/generate_qr', {
+    const flaskResponse = await axios.post('https://onereward-python.vercel.app/generate_qr', {
       email: email
     });
     const qrBase64 = flaskResponse.data.qr_base64;

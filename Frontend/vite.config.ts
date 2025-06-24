@@ -13,12 +13,12 @@ export default defineConfig(({ mode }) => ({
       // '/foo': 'http://localhost:3000',
       // with options
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://onereward-node.vercel.app',
         changeOrigin: true,
         // rewrite: (path) => path.replace(/^\/api/, '') // if your backend doesn't expect /api prefix
       },
       '/by-restaurant': {
-        target: 'http://localhost:3000',
+        target: 'https://onereward-node.vercel.app',
         changeOrigin: true,
       },
     }
