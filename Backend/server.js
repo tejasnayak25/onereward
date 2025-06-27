@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const cors = require('cors');
-const port = 3000;
+const port = process.env.PORT || 3000;
 const Offer = require('./Model/Offer');
 const authRoute = require('./routes/auth');
 const redemptionRoutes = require("./routes/redeem");
@@ -16,7 +16,7 @@ app.use('/api/auth', authRoute);
 app.use("/api/redeem", redemptionRoutes);
 
 // const mongoURI = 'mongodb+srv://OneReward:123@cluster0.iotikiq.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0';
-const mongoURI = 'mongodb://localhost:27017/OneReward'
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/OneReward';
 
 // Connect to MongoDB
 mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
@@ -2124,14 +2124,24 @@ app.put('/api/restaurant/by-name/:name/card-image', async (req, res) => {
 
 
 
-console.log('🚀 Starting server...');
-console.log('📦 Express app created');
-console.log('🔧 Middleware configured');
-console.log('📊 Routes registered');
+// console.log('🚀 Starting server...');
+// console.log('📦 Express app created');
+// console.log('🔧 Middleware configured');
+// console.log('📊 Routes registered');
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🎉 Server is running on port ${port} and accessible on your local network.`);
-  console.log(`🌐 Local: http://localhost:${port}`);
-  console.log(`🌐 Network: http://<YOUR_MACHINE_IP>:${port}`);
-  console.log('✅ Server startup complete!');
-});
+// app.listen(port, '0.0.0.0', () => {
+//   console.log(`🎉 Server is running on port ${port} and accessible on your local network.`);
+//   console.log(`🌐 Local: http://localhost:${port}`);
+//   console.log(`🌐 Network: http://<YOUR_MACHINE_IP>:${port}`);
+//   console.log('✅ Server startup complete!');
+// });
+
+if (require.main === module) {
+   console.log('🚀 Starting server in LOCAL mode...');
+   app.listen(port, '0.0.0.0', () => {
+     console.log(`🎉 Server is running on port ${port}`);
+   });
+}
+
+ // Export the Express app for Vercel’s serverless wrapper
+ module.exports = app;
