@@ -114,7 +114,7 @@ const CustomerHome = () => {
         >
           {topSliders.map((slider, index) => (
             <div
-              key={slider.id}
+              key={"top-slider-"+index}
               className="w-full flex-shrink-0 snap-center"
             >
              <div
@@ -145,7 +145,7 @@ const CustomerHome = () => {
         <div className="absolute bottom-3 right-4 flex space-x-1">
           {topSliders.map((_, index) => (
             <button
-              key={index}
+              key={"bottom-indicator-"+index}
               className={`w-1.5 h-1.5 rounded-full transition-all ${
                 index === topCurrentSlide
                   ? "bg-white scale-125"
@@ -171,13 +171,13 @@ const CustomerHome = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {featuredRestaurants.map((restaurant) => {
+          {featuredRestaurants.map((restaurant, index) => {
             const restaurantId = findRestaurantByName(restaurant.name);
             const linkTo = restaurantId ? `/customer/cards/${restaurantId}` : `/customer/cards/${restaurant.id}`;
 
             return (
               <Link
-                key={restaurant.id}
+                key={"restaurant-"+index}
                 to={linkTo}
                 className="block group hover-scale"
               >
@@ -227,7 +227,7 @@ const CustomerHome = () => {
         >
           {bottomSliders.map((slider, index) => (
             <div
-              key={slider.id}
+              key={"bottom-slider-"+index}
               className="w-full flex-shrink-0 snap-center"
             >
              <div
@@ -258,7 +258,7 @@ const CustomerHome = () => {
         <div className="absolute bottom-3 right-4 flex space-x-1">
           {bottomSliders.map((_, index) => (
             <button
-              key={index}
+              key={"bottom-indicator-"+index}
               className={`w-1.5 h-1.5 rounded-full transition-all ${
                 index === bottomCurrentSlide
                   ? "bg-white scale-125"
