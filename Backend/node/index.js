@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const cors = require('cors');
-const port = 3000;
+const port = process.env.PORT || 3000;
 const Offer = require('./Model/Offer');
 const authRoute = require('./routes/auth');
 const redemptionRoutes = require("./routes/redeem");
@@ -63,6 +63,11 @@ const restaurantSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    city: {
+      type: String,
+      required: false, // Temporarily optional for testing
+      trim: true,
+    },
     join_date: {
       type: Date,
       default: Date.now,
@@ -79,6 +84,7 @@ const restaurantSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+restaurantSchema.set('strict', false);
 const Restaurant = mongoose.model('Restaurant', restaurantSchema);
 
 
@@ -136,14 +142,11 @@ app.get('/by-restaurant/:restaurantId', async (req, res) => {
 
 // Create a new restaurant
 app.post('/api/restaurants/create', async (req, res) => {
-  const { name, email, password, status } = req.body;
+  const { name, email, password, status, city } = req.body;
 
-  console.log("name : ", name , "email ", email , password  , status)
+  console.log("🔍 Creating restaurant with data:", { name, email, status, city });
 
-
-  console.log("callled .....")
   try {
-
     const existingRestaurant = await Restaurant.findOne({ email });
     if (existingRestaurant) {
       return res.status(400).json({ message: 'Restaurant with this email already exists' });
@@ -155,15 +158,23 @@ app.post('/api/restaurants/create', async (req, res) => {
       email,
       password,
       status,
+      city,
     });
 
-    // Save the new restaurant to the database
-    await newRestaurant.save();
+    console.log("🔍 Restaurant object before save:", newRestaurant.toObject());
 
-    res.status(201).json({ message: 'Restaurant created successfully' });
+    // Save the new restaurant to the database
+    const savedRestaurant = await newRestaurant.save();
+
+    console.log("✅ Restaurant saved successfully:", savedRestaurant.toObject());
+
+    res.status(201).json({
+      message: 'Restaurant created successfully',
+      restaurant: savedRestaurant
+    });
   } catch (error) {
-    console.error('Error creating restaurant:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('❌ Error creating restaurant:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
 
@@ -171,6 +182,10 @@ app.post('/api/restaurants/create', async (req, res) => {
 app.get('/api/restaurants', async (req, res) => {
   try {
     const restaurants = await Restaurant.find().sort({ join_date: -1 });
+    console.log("🔍 Fetched restaurants with cities:");
+    restaurants.forEach(r => {
+      console.log(`- ${r.name}: ${r.city || 'NO CITY'}`);
+    });
     res.json(restaurants);
   } catch (error) {
     console.error('Error fetching restaurants:', error);
@@ -178,26 +193,66 @@ app.get('/api/restaurants', async (req, res) => {
   }
 });
 
+// Get unique cities from restaurants
+app.get('/api/restaurants/cities', async (req, res) => {
+  try {
+    const cities = await Restaurant.distinct('city');
+    console.log('Found cities:', cities);
+    const filteredCities = cities.filter(city => city); // Filter out null/undefined values
+    console.log('Filtered cities:', filteredCities);
+    res.json(filteredCities);
+  } catch (error) {
+    console.error('Error fetching cities:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
 // Update a restaurant's details
 app.put('/api/restaurants/update/:id', async (req, res) => {
-  const { name, email, status } = req.body;
+  const { name, email, status, city } = req.body;
   const { id } = req.params;
 
+  console.log("🔍 Updating restaurant with data:", { id, name, email, status, city });
+
   try {
+    // First, let's try using $set to explicitly set the city field
+    const updateData = {
+      name,
+      email,
+      status,
+      city
+    };
+
+    console.log("🔍 Update data being sent to MongoDB:", updateData);
+
     const updatedRestaurant = await Restaurant.findByIdAndUpdate(
       id,
-      { name, email, status },
-      { new: true }
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
     if (!updatedRestaurant) {
       return res.status(404).json({ message: 'Restaurant not found' });
     }
 
+    console.log("✅ Restaurant updated successfully:", updatedRestaurant.toObject());
+
+    // If city is still not set, try manual approach
+    if (!updatedRestaurant.city && city) {
+      console.log("🔧 City not set, trying manual update...");
+      updatedRestaurant.city = city;
+      await updatedRestaurant.save();
+      console.log("🔧 Manual city update completed");
+    }
+
+    // Double-check what's actually in the database
+    const verifyRestaurant = await Restaurant.findById(id);
+    console.log("🔍 Verification - Restaurant in DB:", verifyRestaurant.toObject());
+
     res.json({ message: 'Restaurant updated successfully', restaurant: updatedRestaurant });
   } catch (error) {
-    console.error('Error updating restaurant:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
+    console.error('❌ Error updating restaurant:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
 
@@ -473,14 +528,32 @@ app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
       'redeemPoints.restaurantName': restaurantName
     });
 
+    console.log(`📊 Found ${usersWithRedemptions.length} users with redemptions for ${restaurantName}`);
+
+    // Debug: Check if redeemPoints field exists at all
+    const allUsers = await User.find({});
+    const usersWithRedeemField = allUsers.filter(user => user.redeemPoints && user.redeemPoints.length > 0);
+    console.log(`📊 Total users in database: ${allUsers.length}`);
+    console.log(`📊 Users with any redeemPoints: ${usersWithRedeemField.length}`);
+
+    if (usersWithRedeemField.length > 0) {
+      console.log(`📊 Sample redemption data:`, usersWithRedeemField[0].redeemPoints);
+    }
+
     // Get all offers for this restaurant
     const offers = await Offer.find({ restaurantName: restaurantName });
 
-    // Calculate basic stats
-    let totalPointsIssued = 0;
-    let totalUsers = usersWithPoints.length;
-    let activeUsers = 0; // Users with points > 0
+    // Calculate CORRECT statistics
+    let totalPointsIssued = 0; // Total points ever given to customers
+    let totalRedemptions = 0;  // Total points redeemed by customers
+    let totalUsers = 0;
+    let activeUsers = 0; // Users with current points > 0
+    let totalUsersRedeemed = 0;
 
+    console.log(`📊 Starting stats calculation for ${restaurantName}`);
+
+    // Method 1: Calculate total issued points from available points
+    console.log(`📊 Calculating available points...`);
     usersWithPoints.forEach(user => {
       const restaurantPoints = user.availablePoints.find(
         point => point.restaurantName === restaurantName
@@ -490,35 +563,46 @@ app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
         if (restaurantPoints.points > 0) {
           activeUsers++;
         }
+        console.log(`👤 ${user.name}: Available Points = ${restaurantPoints.points}`);
       }
     });
 
-    // Calculate redemption stats
-    let totalRedemptions = 0;
-    let totalUsersRedeemed = 0;
-    let highValueRedemptions = 0;
-    let recentRedemptions = 0;
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
+    // Method 2: Calculate total redemptions separately
+    console.log(`📊 Calculating redemptions...`);
     usersWithRedemptions.forEach(user => {
-      const userRedemptions = user.redeemPoints.filter(
+      const userRedemptions = user.redeemPoints?.filter(
         redemption => redemption.restaurantName === restaurantName
-      );
+      ) || [];
 
       if (userRedemptions.length > 0) {
         totalUsersRedeemed++;
         userRedemptions.forEach(redemption => {
           totalRedemptions += redemption.points;
-          if (redemption.points > 150) {
-            highValueRedemptions++;
-          }
-          // Check if redemption is recent (last 30 days)
-          if (redemption.timestamp && new Date(redemption.timestamp) > thirtyDaysAgo) {
-            recentRedemptions++;
-          }
+          console.log(`🔄 ${user.name}: Redeemed ${redemption.points} points - ${redemption.description || 'No description'}`);
         });
       }
     });
+
+    // Method 3: Add redemptions to issued points to get TOTAL EVER ISSUED
+    const actualTotalIssued = totalPointsIssued + totalRedemptions;
+
+    // Update total users count
+    const allUserIds = new Set([
+      ...usersWithPoints.map(u => u._id.toString()),
+      ...usersWithRedemptions.map(u => u._id.toString())
+    ]);
+    totalUsers = allUserIds.size;
+
+    console.log(`📊 FINAL CALCULATIONS:`);
+    console.log(`   - Users with available points: ${usersWithPoints.length}`);
+    console.log(`   - Users with redemptions: ${usersWithRedemptions.length}`);
+    console.log(`   - Total unique users: ${totalUsers}`);
+    console.log(`   - Current available points: ${totalPointsIssued}`);
+    console.log(`   - Total redeemed points: ${totalRedemptions}`);
+    console.log(`   - Total points ever issued: ${actualTotalIssued}`);
+
+    // Use the corrected values
+    totalPointsIssued = actualTotalIssued;
 
     // Calculate engagement metrics
     const engagementRate = totalUsers > 0 ? Math.round((totalUsersRedeemed / totalUsers) * 100) : 0;
@@ -578,11 +662,13 @@ app.get("/api/restaurant/:restaurantName/stats", async (req, res) => {
     }).sort((a, b) => b.points - a.points); // Sort by points descending
 
     const stats = {
-      // Core Metrics (as requested)
+      // Core Metrics (corrected)
       totalUsers,
-      totalPointsIssued,
-      totalRedemptions,
+      totalPointsIssued, // Now shows actual total issued (available + redeemed)
+      totalRedemptions, // Now shows actual total redeemed points
       totalOffers: offers.length,
+      activeUsers, // Users with current points > 0
+      totalUsersRedeemed, // Users who have made redemptions
 
       // Top Customers (150+ points)
       topCustomersOver150: formattedTopCustomers150Plus,
@@ -709,9 +795,6 @@ app.get("/api/restaurant/:restaurantName/all-customers", async (req, res) => {
 
       const totalRedeemed = userRedemptions.reduce((sum, r) => sum + r.points, 0);
       const hasHighValueRedemption = userRedemptions.some(r => r.points > 150);
-      const lastRedemption = userRedemptions.length > 0
-        ? userRedemptions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]
-        : null;
 
       return {
         _id: user._id,
@@ -723,12 +806,6 @@ app.get("/api/restaurant/:restaurantName/all-customers", async (req, res) => {
         redemptionCount: userRedemptions.length,
         hasRedeemed: userRedemptions.length > 0,
         hasHighValueRedemption,
-        lastRedemption: lastRedemption ? {
-          points: lastRedemption.points,
-          description: lastRedemption.description,
-          date: lastRedemption.timestamp
-        } : null,
-        joinDate: user.createdAt || user.join_date,
         status: 'active'
       };
     });
@@ -916,6 +993,49 @@ app.get("/api/restaurant/:restaurantName/redemptions", async (req, res) => {
 // Test endpoint
 app.get("/api/test", (req, res) => {
   res.json({ message: "Test endpoint working", timestamp: new Date().toISOString() });
+});
+
+// Test endpoint to add sample redemption data
+app.post("/api/test-add-redemption", async (req, res) => {
+  try {
+    const { userEmail, restaurantName, points, description } = req.body;
+
+    console.log(`🧪 Adding test redemption: ${userEmail}, ${restaurantName}, ${points} points`);
+
+    const user = await User.findOne({ email: userEmail });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Initialize redeemPoints array if not present
+    if (!user.redeemPoints) {
+      user.redeemPoints = [];
+    }
+
+    user.redeemPoints.push({
+      restaurantName: restaurantName,
+      points: parseInt(points),
+      description: description || 'Test redemption',
+      timestamp: new Date(),
+      redeemedAt: new Date()
+    });
+
+    await user.save();
+
+    console.log(`✅ Test redemption added successfully`);
+    res.status(200).json({
+      message: 'Test redemption added successfully',
+      user: user.name,
+      redemption: {
+        restaurantName,
+        points,
+        description
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error adding test redemption:', error);
+    res.status(500).json({ message: 'Error adding test redemption', error: error.message });
+  }
 });
 
 // Test QR endpoint to verify it's working
@@ -1130,6 +1250,7 @@ const sliderSchema = new mongoose.Schema({
   image: String,
   order: Number,
   type: { type: String, enum: ['top', 'bottom'], required: true },  // Added 'type' field
+  restaurantName: String, // Restaurant name to link to
 });
 
 const Slider = mongoose.model('Slider', sliderSchema);
@@ -1147,9 +1268,9 @@ app.get('/api/:type-sliders', async (req, res) => {
 
 // Create a new Slider with type
 app.post('/api/slider', async (req, res) => {
-  const { title, image, order, type } = req.body;  // type is received in the body
+  const { title, image, order, type, restaurantName } = req.body;  // type is received in the body
   try {
-    const newSlider = new Slider({ title, image, order, type });
+    const newSlider = new Slider({ title, image, order, type, restaurantName });
     await newSlider.save();
     res.status(201).json(newSlider);
   } catch (err) {
@@ -1159,9 +1280,9 @@ app.post('/api/slider', async (req, res) => {
 
 // Update an existing Slider with type
 app.put('/api/slider/:id', async (req, res) => {
-  const { title, image, order, type } = req.body;
+  const { title, image, order, type, restaurantName } = req.body;
   try {
-    const updatedSlider = await Slider.findByIdAndUpdate(req.params.id, { title, image, order, type }, { new: true });
+    const updatedSlider = await Slider.findByIdAndUpdate(req.params.id, { title, image, order, type, restaurantName }, { new: true });
     res.json(updatedSlider);
   } catch (err) {
     res.status(500).json({ error: 'Error updating slider' });
@@ -2014,14 +2135,24 @@ app.put('/api/restaurant/by-name/:name/card-image', async (req, res) => {
 
 
 
-console.log('🚀 Starting server...');
-console.log('📦 Express app created');
-console.log('🔧 Middleware configured');
-console.log('📊 Routes registered');
+// console.log('🚀 Starting server...');
+// console.log('📦 Express app created');
+// console.log('🔧 Middleware configured');
+// console.log('📊 Routes registered');
 
-app.listen(port, '0.0.0.0', () => {
-  console.log(`🎉 Server is running on port ${port} and accessible on your local network.`);
-  console.log(`🌐 Local: http://localhost:${port}`);
-  console.log(`🌐 Network: http://<YOUR_MACHINE_IP>:${port}`);
-  console.log('✅ Server startup complete!');
-});
+// app.listen(port, '0.0.0.0', () => {
+//   console.log(`🎉 Server is running on port ${port} and accessible on your local network.`);
+//   console.log(`🌐 Local: http://localhost:${port}`);
+//   console.log(`🌐 Network: http://<YOUR_MACHINE_IP>:${port}`);
+//   console.log('✅ Server startup complete!');
+// });
+
+if (require.main === module) {
+   console.log('🚀 Starting server in LOCAL mode...');
+   app.listen(port, '0.0.0.0', () => {
+     console.log(`🎉 Server is running on port ${port}`);
+   });
+}
+
+ // Export the Express app for Vercel’s serverless wrapper
+ module.exports = app;
