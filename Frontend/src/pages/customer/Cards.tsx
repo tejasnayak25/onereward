@@ -59,7 +59,7 @@ const CustomerCards = () => {
   // Fetch restaurant data
   const fetchRestaurants = async () => {
     try {
-      const { data } = await axios.get("/api/restaurants");
+      const { data } = await axios.get(`${API_BASE_URL}/api/restaurants`);
       const withImages = data.map((r: Restaurant) => ({
         ...r,
         image: IMAGE_POOL[Math.floor(Math.random() * IMAGE_POOL.length)], // Random image from pool
