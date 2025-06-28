@@ -48,7 +48,7 @@ const CustomerHome = () => {
         axios.get(`${API_URL}/top-sliders`),
         axios.get(`${API_URL}/bottom-sliders`),
         axios.get(`${API_URL}/featured-restaurants`),
-        axios.get(`/api/restaurants`),
+        axios.get(`${API_URL}/restaurants`),
       ]);
 
       setTopSliders(topSlidersResponse.data);
