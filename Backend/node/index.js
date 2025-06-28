@@ -22,7 +22,6 @@ app.use(async (req, res, next) => {
 app.use('/api/auth', authRoute);
 app.use("/api/redeem", redemptionRoutes);
 
-// const mongoURI = 'mongodb+srv://OneReward:123@cluster0.iotikiq.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0';
 // const mongoURI = 'mongodb://localhost:27017/OneReward'
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/OneReward';
 
