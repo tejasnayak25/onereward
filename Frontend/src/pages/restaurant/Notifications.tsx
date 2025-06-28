@@ -60,11 +60,7 @@ const Notifications = () => {
             createdBy: email
         });
 
-<<<<<<< HEAD
         fetch(`${API_BASE_URL}/api/notifications?createdby=${encodeURIComponent(email)}`)
-=======
-        fetch(`/api/notifications?createdby=${encodeURIComponent(email)}`)
->>>>>>> upstream/master
       .then((response) => response.json())
         .then((res) => {
             if(res) {
@@ -103,11 +99,7 @@ const Notifications = () => {
 
     // Add customer data to the backend
     axios
-<<<<<<< HEAD
       .post(`${API_BASE_URL}/api/notifications`, formData)
-=======
-      .post("/api/notifications", formData)
->>>>>>> upstream/master
       .then((response) => {
         setNotifications([...notifications, response.data.notification]);
         setDialogOpen(false);
@@ -280,21 +272,14 @@ const Notifications = () => {
         <Dialog open={notificationDialogOpen} onOpenChange={setNotificationDialogOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-<<<<<<< HEAD
               <DialogTitle>Notification Details</DialogTitle>
               <DialogDescription>
                 Information about {selectedNotification.title}
-=======
-              <DialogTitle>Customer Details</DialogTitle>
-              <DialogDescription>
-                Detailed information about {selectedNotification.name}
->>>>>>> upstream/master
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-<<<<<<< HEAD
                   <Bell className="h-8 w-8" />
                 </div>
                 <div>
@@ -305,33 +290,6 @@ const Notifications = () => {
               <div className="rounded-lg border p-3">
                 <div className="text-sm text-muted-foreground">Body</div>
                 <div className="font-medium mt-1">{selectedNotification.body}</div>
-=======
-                  <Gift className="h-8 w-8" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold">{selectedNotification.name}</h3>
-                  <p className="text-muted-foreground">{selectedNotification.email}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Phone</div>
-                  <div className="font-medium mt-1">{selectedNotification.phone}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Join Date</div>
-                  <div className="font-medium mt-1">{selectedNotification.joinDate}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Total Points</div>
-                  <div className="font-medium mt-1">{selectedNotification.totalPoints}</div>
-                </div>
-                <div className="rounded-lg border p-3">
-                  <div className="text-sm text-muted-foreground">Status</div>
-                  <div className="font-medium mt-1 capitalize">{selectedNotification.status}</div>
-                </div>
->>>>>>> upstream/master
               </div>
             </div>
             <DialogFooter>

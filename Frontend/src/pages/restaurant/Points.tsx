@@ -30,10 +30,7 @@ import {
   Gift,
   Calendar,
 } from "lucide-react";
-<<<<<<< HEAD
 import { API_BASE_URL } from "@/config/api";
-=======
->>>>>>> upstream/master
 
 interface Offer {
   _id: number;
@@ -67,11 +64,7 @@ const RestaurantPoints = () => {
 
     // Fetch all offers and filter on client side (temporary fix for backend filtering issue)
     axios
-<<<<<<< HEAD
       .get(`${API_BASE_URL}/api/offers`)
-=======
-      .get("/api/offers")
->>>>>>> upstream/master
       .then((response) => {
         // Filter offers to show only this restaurant's offers
         const filteredOffers = response.data.filter(
@@ -124,11 +117,7 @@ const RestaurantPoints = () => {
 
     if (currentOffer) {
       axios
-<<<<<<< HEAD
         .put(`${API_BASE_URL}/api/offers/${currentOffer._id}`, offerData)
-=======
-        .put(`/api/offers/${currentOffer._id}`, offerData)
->>>>>>> upstream/master
         .then((response) => {
           const updatedOffers = offers.map((offer) =>
             offer._id === currentOffer._id ? response.data : offer
@@ -149,11 +138,7 @@ const RestaurantPoints = () => {
         });
     } else {
       axios
-<<<<<<< HEAD
         .post(`${API_BASE_URL}/api/offers`, offerData)
-=======
-        .post("/api/offers", offerData)
->>>>>>> upstream/master
         .then((response) => {
           setOffers([...offers, response.data]);
           toast({
@@ -234,11 +219,7 @@ const RestaurantPoints = () => {
     }
 
     axios
-<<<<<<< HEAD
       .delete(`${API_BASE_URL}/api/offers/${_id}`)
-=======
-      .delete(`/api/offers/${_id}`)
->>>>>>> upstream/master
       .then(() => {
         setOffers(offers.filter((offer) => offer._id !== _id));
         toast({

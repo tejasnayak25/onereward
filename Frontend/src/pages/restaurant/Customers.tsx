@@ -4,16 +4,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-<<<<<<< HEAD
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Users, Search, Download, Phone, Mail, Calendar, Gift, Activity, RefreshCw } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
-=======
-
-import { Loader2, Users, Search, Download, Phone, Mail, Gift, RefreshCw } from "lucide-react";
-import axios from "axios";
->>>>>>> upstream/master
 
 interface Customer {
   _id: string;
@@ -25,15 +19,12 @@ interface Customer {
   redemptionCount: number;
   hasRedeemed: boolean;
   hasHighValueRedemption: boolean;
-<<<<<<< HEAD
   lastRedemption: {
     points: number;
     description: string;
     date: string;
   } | null;
   joinDate: string;
-=======
->>>>>>> upstream/master
   status: string;
 }
 
@@ -53,20 +44,16 @@ const RestaurantCustomers = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-<<<<<<< HEAD
   const [autoRefresh, setAutoRefresh] = useState(() => {
     // Load auto-refresh preference from localStorage
     const saved = localStorage.getItem('restaurant-auto-refresh');
     return saved !== null ? JSON.parse(saved) : true;
   });
-=======
->>>>>>> upstream/master
 
   useEffect(() => {
     fetchCustomers();
   }, []);
 
-<<<<<<< HEAD
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
@@ -87,9 +74,6 @@ const RestaurantCustomers = () => {
     // Save preference to localStorage
     localStorage.setItem('restaurant-auto-refresh', JSON.stringify(checked));
   };
-=======
-
->>>>>>> upstream/master
 
   useEffect(() => {
     // Filter customers based on search term
@@ -119,11 +103,7 @@ const RestaurantCustomers = () => {
 
       console.log("👥 Fetching customers for:", restaurantName);
 
-<<<<<<< HEAD
       const response = await axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/all-customers`);
-=======
-      const response = await axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/all-customers`);
->>>>>>> upstream/master
 
       console.log("✅ Customers data:", response.data);
 
@@ -153,19 +133,11 @@ const RestaurantCustomers = () => {
       let csvContent = "data:text/csv;charset=utf-8,";
 
       // Add headers
-<<<<<<< HEAD
       csvContent += "Name,Email,Phone,Current Points,Total Redeemed,Redemption Count,Has Redeemed,Join Date,Last Redemption Points,Last Redemption Description\n";
 
       // Add customer data
       filteredCustomers.forEach(customer => {
         csvContent += `"${customer.name}","${customer.email}","${customer.phone}",${customer.currentPoints},${customer.totalRedeemed},${customer.redemptionCount},"${customer.hasRedeemed ? 'Yes' : 'No'}","${new Date(customer.joinDate).toLocaleDateString()}","${customer.lastRedemption?.points || ''}","${customer.lastRedemption?.description || ''}"\n`;
-=======
-      csvContent += "Name,Email,Phone,Current Points,Total Redeemed,Redemption Count,Has Redeemed\n";
-
-      // Add customer data
-      filteredCustomers.forEach(customer => {
-        csvContent += `"${customer.name}","${customer.email}","${customer.phone}",${customer.currentPoints},${customer.totalRedeemed},${customer.redemptionCount},"${customer.hasRedeemed ? 'Yes' : 'No'}"\n`;
->>>>>>> upstream/master
       });
 
       // Download file
@@ -183,7 +155,6 @@ const RestaurantCustomers = () => {
     }
   };
 
-<<<<<<< HEAD
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -191,9 +162,6 @@ const RestaurantCustomers = () => {
       day: 'numeric'
     });
   };
-=======
-
->>>>>>> upstream/master
 
   const getPointsBadgeColor = (points: number) => {
     if (points > 150) return "bg-green-100 text-green-800";
@@ -220,7 +188,6 @@ const RestaurantCustomers = () => {
             All customers registered with your restaurant
           </p>
           <p className="text-xs text-muted-foreground">
-<<<<<<< HEAD
             Last updated: {lastRefresh.toLocaleTimeString()} • {autoRefresh ? 'Auto-refreshes every 1 minute' : 'Auto-refresh disabled'}
           </p>
         </div>
@@ -239,12 +206,6 @@ const RestaurantCustomers = () => {
             />
             <span className="text-sm text-muted-foreground">Auto-refresh</span>
           </div>
-=======
-            Last updated: {lastRefresh.toLocaleTimeString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
->>>>>>> upstream/master
           <Button onClick={fetchCustomers} variant="outline" className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -300,11 +261,6 @@ const RestaurantCustomers = () => {
                   <TableHead>Current Points</TableHead>
                   <TableHead>Total Redeemed</TableHead>
                   <TableHead>Redemptions</TableHead>
-<<<<<<< HEAD
-                  <TableHead>Join Date</TableHead>
-                  <TableHead>Last Redemption</TableHead>
-=======
->>>>>>> upstream/master
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -335,27 +291,6 @@ const RestaurantCustomers = () => {
                         {customer.redemptionCount} times
                       </span>
                     </TableCell>
-<<<<<<< HEAD
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(customer.joinDate)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {customer.lastRedemption ? (
-                        <div className="text-sm">
-                          <div className="font-medium">{customer.lastRedemption.points} pts</div>
-                          <div className="text-muted-foreground truncate max-w-32">
-                            {customer.lastRedemption.description}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">No redemptions</span>
-                      )}
-                    </TableCell>
-=======
->>>>>>> upstream/master
                   </TableRow>
                 ))}
               </TableBody>

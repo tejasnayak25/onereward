@@ -1,23 +1,13 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Activity, Target, Award, Clock, RefreshCw } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import axios from "axios";
 import { API_BASE_URL } from "@/config/api";
-=======
-import { Loader2, Users, Star, TrendingUp, Gift, AlertTriangle, Calendar, Target, Award, Clock, RefreshCw } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import axios from "axios";
->>>>>>> upstream/master
 
 interface DashboardStats {
   totalUsers: number;
@@ -84,20 +74,16 @@ const RestaurantDashboard = () => {
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-<<<<<<< HEAD
   const [autoRefresh, setAutoRefresh] = useState(() => {
     // Load auto-refresh preference from localStorage
     const saved = localStorage.getItem('restaurant-auto-refresh');
     return saved !== null ? JSON.parse(saved) : true;
   });
-=======
->>>>>>> upstream/master
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-<<<<<<< HEAD
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
 
@@ -118,9 +104,6 @@ const RestaurantDashboard = () => {
     // Save preference to localStorage
     localStorage.setItem('restaurant-auto-refresh', JSON.stringify(checked));
   };
-=======
-
->>>>>>> upstream/master
 
   const fetchDashboardData = async () => {
     try {
@@ -138,13 +121,8 @@ const RestaurantDashboard = () => {
 
       // Fetch stats and redemptions
       const [statsResponse, redemptionsResponse] = await Promise.all([
-<<<<<<< HEAD
         axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/stats`),
         axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/redemptions`)
-=======
-        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/stats`),
-        axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/redemptions`)
->>>>>>> upstream/master
       ]);
 
       console.log("✅ Stats data:", statsResponse.data);
@@ -173,11 +151,7 @@ const RestaurantDashboard = () => {
 
       console.log("📥 Downloading Excel data for:", restaurantName);
 
-<<<<<<< HEAD
       const response = await axios.get(`${API_BASE_URL}/api/restaurant/${encodeURIComponent(restaurantName)}/download-excel`);
-=======
-      const response = await axios.get(`/api/restaurant/${encodeURIComponent(restaurantName)}/download-excel`);
->>>>>>> upstream/master
 
       // Convert to CSV format for easy Excel import
       const data = response.data.data;
@@ -256,7 +230,6 @@ const RestaurantDashboard = () => {
             Complete overview of your loyalty program
           </p>
           <p className="text-xs text-muted-foreground">
-<<<<<<< HEAD
             Last updated: {lastRefresh.toLocaleTimeString()} • {autoRefresh ? 'Auto-refreshes every 1 minute' : 'Auto-refresh disabled'}
           </p>
         </div>
@@ -275,12 +248,6 @@ const RestaurantDashboard = () => {
             />
             <span className="text-sm text-muted-foreground">Auto-refresh</span>
           </div>
-=======
-            Last updated: {lastRefresh.toLocaleTimeString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
->>>>>>> upstream/master
           <Button onClick={fetchDashboardData} variant="outline" className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
             Refresh
