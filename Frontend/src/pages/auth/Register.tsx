@@ -20,6 +20,10 @@ const Register = () => {
     userType: "customer", // Default user type
   });
   const [error, setError] = useState("");
+<<<<<<< HEAD
+=======
+  const [savePassword, setSavePassword] = useState(false);
+>>>>>>> upstream/master
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,7 +47,11 @@ const Register = () => {
 
     try {
       // Send data to the backend API
+<<<<<<< HEAD
       const response = await axios.post(`${API_BASE_URL}/api/auth/register`, formData);
+=======
+      const response = await axios.post("/api/auth/register", formData);
+>>>>>>> upstream/master
 
       // If registration is successful, show success message
       toast({
@@ -54,6 +62,18 @@ const Register = () => {
       // Store user data in localStorage
       localStorage.setItem("user", JSON.stringify(formData));
 
+<<<<<<< HEAD
+=======
+      // Save credentials if Save Password is checked
+      if (savePassword) {
+        localStorage.setItem("rememberedCredentials", JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          userType: formData.userType
+        }));
+      }
+
+>>>>>>> upstream/master
       // Redirect to the login page or dashboard
       navigate("/login");
     } catch (err: any) {
@@ -140,16 +160,38 @@ const Register = () => {
             
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
+<<<<<<< HEAD
               <Input 
                 id="confirmPassword" 
                 name="confirmPassword"
                 type="password" 
+=======
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+>>>>>>> upstream/master
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
                 required
               />
             </div>
+<<<<<<< HEAD
             
+=======
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="savePassword"
+                checked={savePassword}
+                onCheckedChange={(checked) => setSavePassword(checked as boolean)}
+              />
+              <Label htmlFor="savePassword" className="text-sm">
+                Save my password for future logins
+              </Label>
+            </div>
+
+>>>>>>> upstream/master
             <Button type="submit" className="w-full">Create Account</Button>
           </form>
         </CardContent>

@@ -7,12 +7,13 @@ import { ArrowRight, Store } from "lucide-react";
 import { API_BASE_URL } from "@/config/api";
 
 // Sample API URL (adjust as necessary)
-const API_URL = "/api"; // Replace with your actual API base URL
+const API_URL = `${API_BASE_URL}/api`; // Replace with your actual API base URL
 
 const CustomerHome = () => {
   const [topSliders, setTopSliders] = useState([]);
   const [bottomSliders, setBottomSliders] = useState([]);
   const [featuredRestaurants, setFeaturedRestaurants] = useState([]);
+  const [restaurants, setRestaurants] = useState([]);
   const [topCurrentSlide, setTopCurrentSlide] = useState(0);
   const [bottomCurrentSlide, setBottomCurrentSlide] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
@@ -20,18 +21,40 @@ const CustomerHome = () => {
   const topSliderRef = useRef<HTMLDivElement>(null);
   const bottomSliderRef = useRef<HTMLDivElement>(null);
 
+  // Function to find restaurant by name and get its ID
+  const findRestaurantByName = (restaurantName: string) => {
+    if (!restaurantName) return null;
+    const restaurant = restaurants.find(r =>
+      r.name.toLowerCase() === restaurantName.toLowerCase()
+    );
+    return restaurant?._id || null;
+  };
+
+  // Function to handle slider click
+  const handleSliderClick = (slider: any) => {
+    if (slider.restaurantName) {
+      const restaurantId = findRestaurantByName(slider.restaurantName);
+      if (restaurantId) {
+        // Navigate to restaurant card
+        window.location.href = `/customer/cards/${restaurantId}`;
+      }
+    }
+  };
+
   // Fetch data for sliders and featured restaurants
   const fetchData = async () => {
     try {
-      const [topSlidersResponse, bottomSlidersResponse, featuredRestaurantsResponse] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/top-sliders`),
-        axios.get(`${API_BASE_URL}/api/bottom-sliders`),
-        axios.get(`${API_BASE_URL}/api/featured-restaurants`),
+      const [topSlidersResponse, bottomSlidersResponse, featuredRestaurantsResponse, restaurantsResponse] = await Promise.all([
+        axios.get(`${API_URL}/top-sliders`),
+        axios.get(`${API_URL}/bottom-sliders`),
+        axios.get(`${API_URL}/featured-restaurants`),
+        axios.get(`/api/restaurants`),
       ]);
-      
+
       setTopSliders(topSlidersResponse.data);
       setBottomSliders(bottomSlidersResponse.data);
       setFeaturedRestaurants(featuredRestaurantsResponse.data);
+      setRestaurants(restaurantsResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -86,14 +109,18 @@ const CustomerHome = () => {
       <div className="relative">
         <div
           ref={topSliderRef}
-          className="flex overflow-x-hidden snap-x snap-mandatory touch-pan-x"
+          className="flex overflow-x-auto snap-x snap-mandatory touch-pan-x scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {topSliders.map((slider, index) => (
             <div
               key={slider.id}
               className="w-full flex-shrink-0 snap-center"
             >
-             <div className="relative aspect-[21/9] overflow-hidden rounded-lg">
+             <div
+               className="relative aspect-[21/9] overflow-hidden rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+               onClick={() => handleSliderClick(slider)}
+             >
                 <div className={`absolute inset-0 bg-muted ${loadedImages[slider.image] ? "opacity-0" : "opacity-100"}`}></div>
                 <img
                   src={slider.image}
@@ -104,6 +131,9 @@ const CustomerHome = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-4">
                   <h3 className="text-white font-medium text-lg">{slider.title}</h3>
+                  {slider.restaurantName && (
+                    <p className="text-white/80 text-sm">Tap to view {slider.restaurantName}</p>
+                  )}
                 </div>
               </div>
 
@@ -141,12 +171,16 @@ const CustomerHome = () => {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {featuredRestaurants.map((restaurant) => (
-            <Link
-              key={restaurant.id}
-              to={`/customer/cards/${restaurant.id}`}
-              className="block group hover-scale"
-            >
+          {featuredRestaurants.map((restaurant) => {
+            const restaurantId = findRestaurantByName(restaurant.name);
+            const linkTo = restaurantId ? `/customer/cards/${restaurantId}` : `/customer/cards/${restaurant.id}`;
+
+            return (
+              <Link
+                key={restaurant.id}
+                to={linkTo}
+                className="block group hover-scale"
+              >
               <div className="rounded-lg overflow-hidden glass-card border bg-card">
                 <div className="aspect-[4/3] overflow-hidden bg-muted relative">
                   <div
@@ -179,7 +213,8 @@ const CustomerHome = () => {
                 </div>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -187,14 +222,18 @@ const CustomerHome = () => {
       <div className="relative mt-6">
         <div
           ref={bottomSliderRef}
-          className="flex overflow-x-hidden snap-x snap-mandatory touch-pan-x"
+          className="flex overflow-x-auto snap-x snap-mandatory touch-pan-x scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {bottomSliders.map((slider, index) => (
             <div
               key={slider.id}
               className="w-full flex-shrink-0 snap-center"
             >
-             <div className="relative aspect-[21/9] overflow-hidden rounded-lg">
+             <div
+               className="relative aspect-[21/9] overflow-hidden rounded-lg cursor-pointer hover:scale-105 transition-transform duration-300"
+               onClick={() => handleSliderClick(slider)}
+             >
               <div className={`absolute inset-0 bg-muted ${loadedImages[slider.image] ? "opacity-0" : "opacity-100"}`}></div>
               <img
                 src={slider.image}
@@ -205,6 +244,9 @@ const CustomerHome = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               <div className="absolute bottom-0 left-0 p-4">
                 <h3 className="text-white font-medium text-lg">{slider.title}</h3>
+                {slider.restaurantName && (
+                  <p className="text-white/80 text-sm">Tap to view {slider.restaurantName}</p>
+                )}
               </div>
             </div>
 

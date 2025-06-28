@@ -13,7 +13,10 @@ import { QrCode, ArrowLeft, Star, Gift, Clock, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PersonalizedCard from "@/components/PersonalizedCard";
 import axios from "axios";
+<<<<<<< HEAD
 import { API_BASE_URL } from "@/config/api";
+=======
+>>>>>>> upstream/master
 
 const CustomerCardDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -31,19 +34,32 @@ const CustomerCardDetail = () => {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
 
         // Step 1: Fetch restaurant details first
+<<<<<<< HEAD
         const restaurantRes = await axios.get(`${API_BASE_URL}/api/restaurants/${id}`);
+=======
+        const restaurantRes = await axios.get(`/api/restaurants/${id}`);
+>>>>>>> upstream/master
         const restaurant = restaurantRes.data;
 
         // Step 2: Fetch offers and redemptions in parallel
         const [offerRes, userRedeemRes, qrCodeRes] = await Promise.all([
+<<<<<<< HEAD
           axios.get(`${API_BASE_URL}/by-restaurant/${id}`),
           axios.get(`${API_BASE_URL}/api/users/redeem-details`, {
+=======
+          axios.get(`/by-restaurant/${id}`),
+          axios.get(`/api/users/redeem-details`, {
+>>>>>>> upstream/master
             params: {
               email: user.email,
               restaurant: restaurant.name,
             },
           }),
+<<<<<<< HEAD
           axios.get(`${API_BASE_URL}/api/user-qr/${user.email}`), // Fetch QR code for user
+=======
+          axios.get(`/api/user-qr/${user.email}`), // Fetch QR code for user
+>>>>>>> upstream/master
         ]);
 
         const offers = offerRes.data.offers;

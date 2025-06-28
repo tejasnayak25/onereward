@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -28,12 +29,36 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [userType, setUserType] = useState("customer");
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Load saved credentials on component mount
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem("rememberedCredentials");
+    if (savedCredentials) {
+      const { email: savedEmail, password: savedPassword, userType: savedUserType } = JSON.parse(savedCredentials);
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      setUserType(savedUserType);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-  
+
     try {
+      // Save credentials if Remember Me is checked
+      if (rememberMe) {
+        localStorage.setItem("rememberedCredentials", JSON.stringify({
+          email,
+          password,
+          userType
+        }));
+      } else {
+        localStorage.removeItem("rememberedCredentials");
+      }
+
       if (userType === "admin") {
         if (email === "admin@gmail.com" && password === "admin") {
           localStorage.setItem(
@@ -179,6 +204,17 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="remember"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label htmlFor="remember" className="text-sm">
+                  Remember me
+                </Label>
               </div>
 
               <Button type="submit" className="w-full">

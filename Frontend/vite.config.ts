@@ -8,6 +8,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    allowedHosts: [
+      "monday-charming-younger-august.trycloudflare.com",
+      "localhost",
+      ".trycloudflare.com"
+    ],
     proxy: {
       // string shorthand: http://localhost:8080/foo -> http://localhost:3000/foo
       // '/foo': 'http://localhost:3000',

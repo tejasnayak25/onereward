@@ -29,7 +29,7 @@ const AdminSliders = () => {
   const [hasChanges, setHasChanges] = useState(false);
 
   // Form state
-  const [sliderFormData, setSliderFormData] = useState({ title: "", image: "", type: "top" });  // Add 'type' field to form state
+  const [sliderFormData, setSliderFormData] = useState({ title: "", image: "", type: "top", restaurantName: "" });  // Add 'type' field to form state
   const [restaurantFormData, setRestaurantFormData] = useState({ name: "", image: "" });
 
   // Fetch data for the selected slider type
@@ -80,14 +80,14 @@ const AdminSliders = () => {
   const openAddSliderDialog = (type: 'top' | 'bottom') => {
     setSliderType(type);
     setCurrentSlider(null);
-    setSliderFormData({ title: "", image: "", type });  // Pass the 'type' when opening dialog
+    setSliderFormData({ title: "", image: "", type, restaurantName: "" });  // Pass the 'type' when opening dialog
     setOpenSliderDialog(true);
   };
 
   const openEditSliderDialog = (slider, type: 'top' | 'bottom') => {
     setSliderType(type);
     setCurrentSlider(slider);
-    setSliderFormData({ title: slider.title, image: slider.image, type: slider.type });
+    setSliderFormData({ title: slider.title, image: slider.image, type: slider.type, restaurantName: slider.restaurantName || "" });
     setOpenSliderDialog(true);
   };
 
@@ -407,6 +407,19 @@ const AdminSliders = () => {
                 placeholder="https://example.com/image.jpg"
                 className="col-span-3"
                 value={sliderFormData.image}
+                onChange={handleSliderInputChange}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="slider-restaurant" className="text-right">
+                Restaurant Name
+              </Label>
+              <Input
+                id="slider-restaurant"
+                name="restaurantName"
+                placeholder="Restaurant name to link to"
+                className="col-span-3"
+                value={sliderFormData.restaurantName}
                 onChange={handleSliderInputChange}
               />
             </div>

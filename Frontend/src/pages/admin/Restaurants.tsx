@@ -61,6 +61,7 @@ const AdminRestaurants = () => {
     status: true,
     password: "",
     confirmPassword: "",
+    city: "",
   });
 
   const fetchRestaurants = async () => {
@@ -104,6 +105,7 @@ const AdminRestaurants = () => {
       status: true,
       password: "",
       confirmPassword: "",
+      city: "",
     });
     setOpenDialog(true);
   };
@@ -117,6 +119,7 @@ const AdminRestaurants = () => {
       status: restaurant.status === "active",
       password: "",
       confirmPassword: "",
+      city: restaurant.city || "",
     });
     setOpenDialog(true);
   };
@@ -143,28 +146,44 @@ const AdminRestaurants = () => {
 
     setIsSubmitting(true);
 
+    console.log("🔍 Frontend: Submitting form data:", formData);
+
     try {
       if (isCreating) {
-        await axios.post(`${API_BASE_URL}/api/restaurants/create`, {
+        const requestData = {
           name: formData.name,
           email: formData.email,
           status: formData.status ? "active" : "inactive",
           password: formData.password,
-        });
+          city: formData.city,
+        };
+
+        console.log("🔍 Frontend: Creating restaurant with data:", requestData);
+
+        const response = await axios.post(`${API_BASE_URL}/api/restaurants/create`, requestData);
+
+        console.log("✅ Frontend: Restaurant created successfully:", response.data);
 
         toast({
           title: "Success",
           description: "Restaurant created successfully",
         });
       } else {
+        const requestData = {
+          name: formData.name,
+          email: formData.email,
+          status: formData.status ? "active" : "inactive",
+          city: formData.city,
+        };
+
+        console.log("🔍 Frontend: Updating restaurant with data:", requestData);
+
         const response = await axios.put(
           `${API_BASE_URL}/api/restaurants/update/${currentRestaurant._id}`,
-          {
-            name: formData.name,
-            email: formData.email,
-            status: formData.status ? "active" : "inactive",
-          }
+          requestData
         );
+
+        console.log("✅ Frontend: Restaurant updated successfully:", response.data);
 
         if (response.status === 200) {
           toast({
@@ -264,6 +283,7 @@ const AdminRestaurants = () => {
                 <TableRow>
                   <TableHead>Restaurant</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>City</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Join Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -292,6 +312,9 @@ const AdminRestaurants = () => {
                           <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
                           {restaurant.email}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {restaurant.city || "Not specified"}
                       </TableCell>
                       <TableCell>
                         <span
@@ -379,6 +402,20 @@ const AdminRestaurants = () => {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="city" className="text-right">
+                  City
+                </Label>
+                <Input
+                  id="city"
+                  name="city"
+                  className="col-span-3"
+                  value={formData.city}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Enter city name"
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">

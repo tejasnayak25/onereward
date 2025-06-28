@@ -3,10 +3,17 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+<<<<<<< HEAD
 import { Search, Store, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PersonalizedCard from "@/components/PersonalizedCard";
 import { API_BASE_URL } from "@/config/api";
+=======
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Store, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import PersonalizedCard from "@/components/PersonalizedCard";
+>>>>>>> upstream/master
 
 // Predefined image pool
 const IMAGE_POOL = [
@@ -27,6 +34,10 @@ interface Restaurant {
   email: string;
   status: string;
   join_date: string;
+<<<<<<< HEAD
+=======
+  city?: string;
+>>>>>>> upstream/master
   image?: string;
   category?: string;
   points?: number;
@@ -37,6 +48,11 @@ const CustomerCards = () => {
   const { toast } = useToast();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+<<<<<<< HEAD
+=======
+  const [selectedCity, setSelectedCity] = useState<string>("all");
+  const [cities, setCities] = useState<string[]>([]);
+>>>>>>> upstream/master
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [userPoints, setUserPoints] = useState<Record<string, number>>({});
 
@@ -44,6 +60,7 @@ const CustomerCards = () => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.name;
 
+<<<<<<< HEAD
   // Fetch restaurant data
   const fetchRestaurants = async () => {
     try {
@@ -54,6 +71,26 @@ const CustomerCards = () => {
         category: "Loyalty Partner", 
         points: userPoints[r.name] || 0, 
         redemptionThreshold: 1000, 
+=======
+  // Extract unique cities from restaurants
+  const extractCitiesFromRestaurants = (restaurantData: Restaurant[]) => {
+    const uniqueCities = [...new Set(restaurantData.map(r => r.city).filter(Boolean))];
+    console.log("Extracted cities from restaurants:", uniqueCities);
+    console.log("Restaurant data sample:", restaurantData.slice(0, 3));
+    setCities(uniqueCities);
+  };
+
+  // Fetch restaurant data
+  const fetchRestaurants = async () => {
+    try {
+      const { data } = await axios.get("/api/restaurants");
+      const withImages = data.map((r: Restaurant) => ({
+        ...r,
+        image: IMAGE_POOL[Math.floor(Math.random() * IMAGE_POOL.length)], // Random image from pool
+        category: "Loyalty Partner",
+        points: userPoints[r.name] || 0,
+        redemptionThreshold: 1000,
+>>>>>>> upstream/master
       }));
       setRestaurants(withImages);
     } catch (error) {
@@ -64,7 +101,11 @@ const CustomerCards = () => {
   // Fetch user points from the API
   const fetchUserPoints = async () => {
     try {
+<<<<<<< HEAD
       const { data } = await axios.get(`${API_BASE_URL}/api/user/${userId}/points`);
+=======
+      const { data } = await axios.get(`/api/user/${userId}/points`);
+>>>>>>> upstream/master
       setUserPoints(data);
     } catch (error) {
       console.error("Failed to fetch user points:", error);
@@ -83,6 +124,16 @@ const CustomerCards = () => {
     }
   }, [userPoints]);
 
+<<<<<<< HEAD
+=======
+  // Extract cities whenever restaurants data changes
+  useEffect(() => {
+    if (restaurants.length > 0) {
+      extractCitiesFromRestaurants(restaurants);
+    }
+  }, [restaurants]);
+
+>>>>>>> upstream/master
   // Handle image loading for smooth transition
   const handleImageLoad = (url: string) => {
     setLoadedImages((prev) => ({
@@ -91,10 +142,25 @@ const CustomerCards = () => {
     }));
   };
 
+<<<<<<< HEAD
   // Filter restaurants based on search query
   const filtered = restaurants.filter((r) =>
     r.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+=======
+  // Filter restaurants based on search query and city
+  const filtered = restaurants.filter((r) => {
+    const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCity = selectedCity === "all" || r.city === selectedCity;
+    return matchesSearch && matchesCity;
+  });
+
+  // Debug logging
+  console.log("Available cities:", cities);
+  console.log("Selected city:", selectedCity);
+  console.log("Total restaurants:", restaurants.length);
+  console.log("Filtered restaurants:", filtered.length);
+>>>>>>> upstream/master
 
   return (
     <div className="space-y-6 pb-16 animate-fade-in">
@@ -103,6 +169,7 @@ const CustomerCards = () => {
         <p className="text-sm text-gray-600 mb-4">
           View and manage your points across all restaurants
         </p>
+<<<<<<< HEAD
         <div className="relative mb-6">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
           <Input
@@ -111,6 +178,39 @@ const CustomerCards = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+=======
+        <div className="flex gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search restaurants..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="w-48">
+            <Select value={selectedCity} onValueChange={setSelectedCity}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filter by city" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Cities</SelectItem>
+                {cities.length > 0 ? (
+                  cities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-cities" disabled>
+                    No cities available
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+>>>>>>> upstream/master
         </div>
       </div>
 
